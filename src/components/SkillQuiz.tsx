@@ -10,12 +10,11 @@ interface Props {
   /** Skills to test, most important first; only the first MAX_QUIZ_SKILLS are quizzed. */
   skills: string[]
   onComplete: (results: QuizResults) => void
-  onSkip: () => void
   saving: boolean
   error?: string
 }
 
-export function SkillQuiz({ skills, onComplete, onSkip, saving, error }: Props) {
+export function SkillQuiz({ skills, onComplete, saving, error }: Props) {
   const [questions] = useState(() => buildQuiz(skills)) // built once so options don't reshuffle mid-quiz
   const [started, setStarted] = useState(false)
   const [index, setIndex] = useState(0)
@@ -56,12 +55,9 @@ export function SkillQuiz({ skills, onComplete, onSkip, saving, error }: Props) 
       <p><strong>{questions.length} questions · about {minutes} minute{minutes === 1 ? '' : 's'}.</strong> Three short questions per skill, from easy to hard. This checks your self-ratings so the agents plan around what you can really do.</p>
       <div className="tag-list">{quizzedSkills.map(s => <span className="tag neutral" key={s}>{s}</span>)}</div>
       {skills.length > MAX_QUIZ_SKILLS && <p className="field-hint">We'll test your top {MAX_QUIZ_SKILLS} skills. The rest keep your self-rating.</p>}
-      <ul className="plain-list quiz-rules"><li>No time limit, and you'll see the answer after each question.</li><li>Guessing is fine, but "I'm not sure" answers give a more honest picture.</li></ul>
+      <ul className="plain-list quiz-rules"><li>No time limit, and you'll see the answer after each question.</li><li>It isn't graded — it only helps the agents plan at the right level.</li></ul>
       {error && <p className="form-error" role="alert"><CircleAlert size={15} /> {error}</p>}
-      <div className="summary-actions">
-        <button type="button" className="button button-ghost" onClick={onSkip} disabled={saving}>{saving ? 'Saving…' : 'Skip — use my ratings'}</button>
-        <button type="button" className="button button-primary" onClick={() => setStarted(true)} disabled={saving}>Start quiz <ArrowRight size={16} /></button>
-      </div>
+      <button type="button" className="button button-primary form-submit" onClick={() => setStarted(true)} disabled={saving}>Start quiz <ArrowRight size={16} /></button>
     </div>
   )
 

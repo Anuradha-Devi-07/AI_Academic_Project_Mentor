@@ -63,12 +63,11 @@ export interface StudentProfile {
   /** The account this profile belongs to (one profile per user). */
   userId: string
   name: string
-  course?: string
-  year?: string
+  course: string
+  year: string
   skills: SkillRating[]
   priorProjects: PriorExperience
   weeklyHours: number
-  teamSize: number
   assessment: SkillAssessment
   createdAt: ISODate
   updatedAt: ISODate
@@ -91,9 +90,11 @@ export interface ProjectIdea {
 
 export type NewProjectIdea = Pick<ProjectIdea, 'title' | 'description' | 'domain' | 'durationWeeks'>
 
-// ── Agent pipeline ─────────────────────────────────────────────────────────
+// ── Agent pipeline (modules 2–5) ───────────────────────────────────────────
+// Milestone 1 implements the trigger: submitting an idea creates a PipelineRun with every
+// step 'queued'. The agents that move steps forward and fill in results come in later milestones.
 
-export type AgentId = 'feasibility' | 'tech_stack' | 'risk' | 'planner' | 'mentor' | 'documentation'
+export type AgentId = 'feasibility' | 'scope_tech' | 'planner' | 'risk'
 export type StepStatus = 'queued' | 'running' | 'completed' | 'failed'
 export type RunStatus = 'queued' | 'running' | 'completed' | 'failed'
 
@@ -114,17 +115,65 @@ export interface PipelineRun {
   steps: AgentStep[]
   createdAt: ISODate
   finishedAt?: ISODate
-  /** Present only when status is 'completed'. */
-  blueprint?: ProjectBlueprint
+  /** Filled in by the agents once the run completes (later milestones). */
+  results?: PipelineResults
 }
+
+// ── Agent output contracts (designed in Milestone 1, produced in later milestones) ──
 
 export type Severity = 'low' | 'medium' | 'high'
 
-export interface ProjectBlueprint {
-  feasibility: { score: number; verdict: 'strong' | 'workable' | 'stretch'; notes: string[] }
+/** Module 2 — Feasibility Analysis Agent */
+export interface FeasibilityResult {
+  score: number
+  verdict: 'strong' | 'workable' | 'stretch'
+  notes: string[]
+}
+
+/** Module 3 — Project Scope Definition and Technology Stack Recommendation Agent */
+export interface ScopeAndStackResult {
+  problemStatement: string
+  targetUsers: string
+  objectives: string[]
+  inScope: string[]
+  outOfScope: string[]
+  successCriteria: string[]
   techStack: { layer: string; choice: string; reason: string }[]
-  risks: { title: string; severity: Severity; mitigation: string }[]
+}
+
+/** Module 4 — Milestone and Timeline Planning Agent */
+export interface MilestonePlanResult {
   milestones: { weeks: string; title: string; deliverables: string[] }[]
-  mentorTips: string[]
-  synopsis: string
+}
+
+/** Module 5 — Risk Assessment and Mitigation Agent */
+export interface RiskResult {
+  risks: { title: string; severity: Severity; mitigation: string }[]
+}
+
+export interface PipelineResults {
+  feasibility: FeasibilityResult
+  scopeAndStack: ScopeAndStackResult
+  plan: MilestonePlanResult
+  risk: RiskResult
+}
+
+// ── Interactive modules (6–7), used after a run completes ──
+
+/** Module 6 — Conversational Mentor Interaction */
+export interface MentorMessage {
+  id: string
+  projectId: string
+  role: 'student' | 'mentor'
+  text: string
+  createdAt: ISODate
+}
+
+/** Module 7 — Documentation and Report Generation */
+export interface ProjectReport {
+  id: string
+  projectId: string
+  kind: 'synopsis' | 'progress' | 'final'
+  content: string
+  createdAt: ISODate
 }

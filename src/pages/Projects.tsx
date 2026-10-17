@@ -22,7 +22,7 @@ export default function Projects() {
   if (!projects.length) return (
     <div className="empty-state">
       <h1>No projects yet</h1>
-      <p>Share a rough idea and the agents will turn it into a blueprint you can build from.</p>
+      <p>Submit a rough idea and it will be sent to the agent pipeline for analysis.</p>
       <Link className="button button-primary" to={api.getProfile() ? '/create' : '/onboarding'}>Start my first project <ArrowRight size={16} /></Link>
     </div>
   )

@@ -41,7 +41,7 @@ export function UserMenu() {
       {open && (
         <div className="user-dropdown" id="user-menu-list" role="menu">
           <div className="user-dropdown-head"><strong>{user.name}</strong><span>{user.email}</span></div>
-          <Link role="menuitem" to="/onboarding"><UserRound size={15} /> Edit profile</Link>
+          <Link role="menuitem" to="/onboarding?edit=1" state={{ from: location.pathname }}><UserRound size={15} /> Edit profile</Link>
           <button role="menuitem" type="button" onClick={handleSignOut} disabled={signingOut}><LogOut size={15} /> {signingOut ? 'Signing out…' : 'Sign out'}</button>
         </div>
       )}

@@ -7,7 +7,7 @@
 import { assessSkills } from '../lib/skills'
 import { load, newId, save } from '../lib/storage'
 import type { NewProjectIdea, PipelineRun, ProjectIdea, StudentProfile } from '../types/models'
-import { getDemoRun, startDemoRun } from './demoPipeline'
+import { getDemoRun, triggerDemoRun } from './demoPipeline'
 import { ApiError, http, isDemoMode } from './http'
 import { getSession } from './session'
 
@@ -70,8 +70,8 @@ export const api = {
   },
 
   /**
-   * Submits an idea and triggers the agent pipeline in one step.
-   * Returns the stored project (with latestRunId) and the initial run snapshot.
+   * Submits an idea and triggers the agent pipeline in one step (Milestone 1).
+   * Returns the stored project (with latestRunId) and the new, queued run.
    */
   async submitIdea(idea: NewProjectIdea): Promise<{ project: ProjectIdea; run: PipelineRun }> {
     const uid = userId()
@@ -87,20 +87,19 @@ export const api = {
     }
 
     const project: ProjectIdea = { ...idea, id: newId('prj'), studentId: profile.id, createdAt: new Date().toISOString() }
-    const run = startDemoRun(profile, project)
+    const run = triggerDemoRun(project)
     const stored = { ...project, latestRunId: run.id }
     cacheProject(uid, stored)
     return { project: stored, run }
   },
 
-  /** Starts a new agent pipeline run for an existing project (e.g. after the student edits their profile). */
+  /** Triggers a new agent pipeline run for an existing project. */
   async triggerPipeline(projectId: string): Promise<PipelineRun> {
     if (!isDemoMode) return http<PipelineRun>(`/projects/${projectId}/pipeline-runs`, { method: 'POST' })
     const uid = userId()
-    const profile = api.getProfile()
     const project = readProjects(uid).find(p => p.id === projectId)
-    if (!profile || !project) throw new ApiError('Project not found.', 404)
-    const run = startDemoRun(profile, project)
+    if (!project) throw new ApiError('Project not found.', 404)
+    const run = triggerDemoRun(project)
     cacheProject(uid, { ...project, latestRunId: run.id })
     return run
   },

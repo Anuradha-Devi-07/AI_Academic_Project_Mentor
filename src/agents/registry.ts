@@ -3,6 +3,8 @@ import type { AgentId } from '../types/models'
 
 export interface AgentDefinition {
   id: AgentId
+  /** Project module number (see docs/ARCHITECTURE.md). */
+  module: number
   name: string
   /** What the agent is responsible for, shown in the pipeline view. */
   role: string
@@ -12,22 +14,27 @@ export interface AgentDefinition {
 }
 
 /**
- * The specialist agents coordinated by the orchestrator. Together they form a DAG:
+ * Pipeline agents (modules 2–5), run by the orchestrator when an idea is submitted. They form a DAG:
  *
- *   feasibility ──► tech_stack ─┐
- *              └──► risk ───────┴──► planner ──► mentor
- *                                            └──► documentation
+ *   feasibility ──► scope_tech ──┬──► planner
+ *                                └──► risk
+ *
+ * Milestone 1 implements only the trigger: the run is created with every step queued.
  */
 export const AGENTS: AgentDefinition[] = [
-  { id: 'feasibility', name: 'Feasibility Analyst', role: 'Checks scope against your skills, time and team size.', dependsOn: [], icon: BrainCircuit },
-  { id: 'tech_stack', name: 'Tech Stack Advisor', role: 'Recommends technologies that fit the idea and what you already know.', dependsOn: ['feasibility'], icon: Layers3 },
-  { id: 'risk', name: 'Risk Assessor', role: 'Flags likely blockers and suggests fallbacks.', dependsOn: ['feasibility'], icon: ShieldAlert },
-  { id: 'planner', name: 'Milestone Planner', role: 'Breaks the project into a week-by-week roadmap.', dependsOn: ['tech_stack', 'risk'], icon: Clock3 },
-  { id: 'mentor', name: 'Mentor', role: 'Suggests your first steps and questions to reflect on.', dependsOn: ['planner'], icon: MessageCircle },
-  { id: 'documentation', name: 'Documentation Assistant', role: 'Drafts a synopsis you can build your report from.', dependsOn: ['planner'], icon: FileText },
+  { id: 'feasibility', module: 2, name: 'Feasibility Analysis', role: 'Checks the idea against your skills and the time you have.', dependsOn: [], icon: BrainCircuit },
+  { id: 'scope_tech', module: 3, name: 'Scope & Tech Stack', role: 'Defines what is in and out of scope, and recommends technologies.', dependsOn: ['feasibility'], icon: Layers3 },
+  { id: 'planner', module: 4, name: 'Milestone Planning', role: 'Breaks the project into a week-by-week timeline.', dependsOn: ['scope_tech'], icon: Clock3 },
+  { id: 'risk', module: 5, name: 'Risk Assessment', role: 'Flags likely blockers and suggests how to mitigate them.', dependsOn: ['scope_tech'], icon: ShieldAlert },
 ]
 
 export const agentById = Object.fromEntries(AGENTS.map(a => [a.id, a])) as Record<AgentId, AgentDefinition>
+
+/** Interactive modules (6–7): used on demand once a run has completed, so they are not pipeline steps. */
+export const INTERACTIVE_MODULES: { module: number; name: string; role: string; icon: LucideIcon }[] = [
+  { module: 6, name: 'Mentor chat', role: 'Ask questions and get guidance on your project.', icon: MessageCircle },
+  { module: 7, name: 'Report generation', role: 'Generate a synopsis and progress reports.', icon: FileText },
+]
 
 /** Topological layers of the DAG: agents in the same stage can run in parallel. */
 export function pipelineStages(): AgentDefinition[][] {

@@ -3,9 +3,12 @@ import { errorMessage } from '../components/ui'
 import { api, isDemoMode } from '../services/api'
 import type { PipelineRun } from '../types/models'
 
-const POLL_MS = isDemoMode ? 500 : 2000
+const POLL_MS = 2000
 
-/** Loads a pipeline run and keeps polling until it completes or fails. */
+/**
+ * Loads a pipeline run. With a backend it keeps polling until the run completes or fails.
+ * In demo mode nothing processes queued runs (agents come in later milestones), so it loads once.
+ */
 export function usePipelineRun(runId: string | undefined) {
   const [run, setRun] = useState<PipelineRun | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +28,7 @@ export function usePipelineRun(runId: string | undefined) {
         if (cancelled) return
         setRun(next)
         setLoading(false)
-        if (next && (next.status === 'queued' || next.status === 'running')) timer = window.setTimeout(poll, POLL_MS)
+        if (!isDemoMode && next && (next.status === 'queued' || next.status === 'running')) timer = window.setTimeout(poll, POLL_MS)
       } catch (e) {
         if (cancelled) return
         setError(errorMessage(e))

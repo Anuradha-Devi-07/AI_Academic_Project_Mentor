@@ -59,11 +59,17 @@ export function quizLevel(correctDifficulties: number[]): Proficiency {
  *   experience up to 25 — prior projects built
  *   time       up to 15 — weekly hours, saturating at 15h
  */
+/** The three parts of the readiness score (they always add up to the score). */
+export function readinessBreakdown(skills: SkillRating[], priorProjects: PriorExperience, weeklyHours: number) {
+  return [
+    { key: 'skills', label: 'Skills', points: Math.round(Math.min(1, skills.reduce((sum, s) => sum + s.level, 0) / 12) * 60), max: 60 },
+    { key: 'experience', label: 'Project experience', points: { none: 0, one: 12, several: 25 }[priorProjects], max: 25 },
+    { key: 'time', label: 'Weekly time', points: Math.min(15, Math.max(0, Math.round(weeklyHours))), max: 15 },
+  ] as const
+}
+
 export function assessSkills(skills: SkillRating[], priorProjects: PriorExperience, weeklyHours: number): SkillAssessment {
-  const skillPoints = Math.min(1, skills.reduce((sum, s) => sum + s.level, 0) / 12) * 60
-  const experiencePoints = { none: 0, one: 12, several: 25 }[priorProjects]
-  const timePoints = Math.min(15, Math.max(0, weeklyHours))
-  const score = Math.round(skillPoints + experiencePoints + timePoints)
+  const score = readinessBreakdown(skills, priorProjects, weeklyHours).reduce((sum, part) => sum + part.points, 0)
   const level: BuilderLevel = score >= 70 ? 'advanced' : score >= 40 ? 'intermediate' : 'beginner'
 
   const strengths = skills.filter(s => s.level === 3).map(s => s.skill)
@@ -71,7 +77,7 @@ export function assessSkills(skills: SkillRating[], priorProjects: PriorExperien
 
   const has = (category: SkillCategory) => skills.some(s => s.category === category)
   const growthAreas: string[] = []
-  if (!skills.some(s => s.skill === 'Git')) growthAreas.push('Version control with Git — essential for team projects')
+  if (!skills.some(s => s.skill === 'Git')) growthAreas.push('Version control with Git — keeps a safe history of your project')
   if (!has('data')) growthAreas.push('Working with data (SQL or pandas)')
   if (!has('web') && !has('design')) growthAreas.push('Building a simple user interface')
   if (priorProjects === 'none') growthAreas.push('Shipping a small end-to-end prototype early')

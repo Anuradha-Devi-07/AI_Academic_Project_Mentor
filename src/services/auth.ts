@@ -58,6 +58,26 @@ export const auth = {
     return toUser(account)
   },
 
+  /**
+   * Forgot password: sets a new password for the account with this email.
+   * NOTE: by design choice there is no check that the person owns the email (no emailed link
+   * or code), so anyone who knows a student's email can change their password. Acceptable for
+   * the classroom demo only; see docs/ARCHITECTURE.md §4 before using this for real accounts.
+   */
+  async resetPasswordByEmail(rawEmail: string, password: string): Promise<void> {
+    const email = normaliseEmail(rawEmail)
+    if (!isDemoMode) {
+      await http<void>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, password }) })
+      return
+    }
+    const accounts = readAccounts()
+    const account = accounts.find(a => a.email === email)
+    if (!account) throw new ApiError('No account found with this email.', 404)
+    const salt = newId('salt')
+    const passwordHash = await hashPassword(password, salt)
+    save(ACCOUNTS_KEY, accounts.map(a => a.id === account.id ? { ...a, salt, passwordHash } : a))
+  },
+
   async signOut(): Promise<void> {
     if (!isDemoMode) await http<void>('/auth/logout', { method: 'POST' }).catch(() => undefined)
     setSession(null)

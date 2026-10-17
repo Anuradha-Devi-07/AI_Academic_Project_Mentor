@@ -12,15 +12,16 @@ import Onboarding from './pages/Onboarding'
 import CreateProject from './pages/CreateProject'
 import Projects from './pages/Projects'
 import ProjectRun from './pages/ProjectRun'
-import { Register, SignIn } from './pages/Auth'
+import { ForgotPassword, Register, SignIn } from './pages/Auth'
 
 const pageTitle = (pathname: string) =>
   pathname === '/sign-in' ? 'Sign in · ProjectMentor AI'
+    : pathname === '/forgot-password' ? 'Forgot password · ProjectMentor AI'
     : pathname === '/register' ? 'Create account · ProjectMentor AI'
     : pathname === '/onboarding' ? 'Your profile · ProjectMentor AI'
     : pathname === '/create' ? 'Share your idea · ProjectMentor AI'
       : pathname === '/projects' ? 'My projects · ProjectMentor AI'
-        : pathname.startsWith('/projects/') ? 'Project blueprint · ProjectMentor AI'
+        : pathname.startsWith('/projects/') ? 'Project · ProjectMentor AI'
           : 'ProjectMentor AI — From idea to impact'
 
 /** Scrolls to the top on page change, or to the #section in the URL once it has rendered. */
@@ -76,6 +77,7 @@ function App() {
             <Route path="/" element={<Home profile={profile} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/onboarding" element={<RequireAuth><Onboarding profile={profile} onSaved={setProfile} /></RequireAuth>} />
             <Route path="/create" element={<RequireAuth><CreateProject profile={profile} /></RequireAuth>} />
             <Route path="/projects" element={<RequireAuth><Projects /></RequireAuth>} />

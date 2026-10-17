@@ -5,16 +5,16 @@ Frontend starter for the Infosys **AI Academic Project Mentor** team project.
 ## Current scope (Milestone 1)
 
 - **Home:** a short welcome card when signed out, and a dashboard (profile summary, recent projects) when signed in
-- **Accounts:** register, sign in and sign out. App pages require sign-in, and each account has its own profile and projects.
-- **Student onboarding:** profile creation, then a skill check (skills rated beginner/intermediate/advanced, prior projects, weekly hours, team size), then a readiness assessment with strengths and growth areas
+- **Accounts:** register, sign in, sign out and forgot/reset password. App pages require sign-in, and each account has its own profile and projects.
+- **Student onboarding (Module 1):** profile creation, skill self-ratings, a required skill quiz, and a readiness assessment with strengths and growth areas. Edit profile re-tests only changed skills.
 - **Project idea submission:** validated form (title, description, domain, duration) that **triggers the multi-agent pipeline**
-- **Live pipeline view:** six specialist agents run in dependency stages with per-agent progress, then show the project blueprint (feasibility, tech stack, roadmap, risks, mentor tips, synopsis draft)
-- "My projects" list; re-run analysis after changing your profile
+- **Pipeline status:** each submitted idea shows its pipeline run (Queued) and the four analysis agents that will process it. The agents (modules 2–5), mentor chat (6) and report generation (7) are designed but built in later milestones.
+- "My projects" list
 - Typed data models, an agent registry and a backend API client ready for integration
 
-See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the research basis, agent roles, data models and the proposed API contract.
+See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the seven modules and their milestone status, the research basis, agent roles, data models and the proposed API contract.
 
-**Demo mode:** with `VITE_API_BASE_URL` empty, data is stored in the browser and the "agents" are built-in rules, not AI. Set the variable in `.env.local` to call the real backend. No UI changes are needed.
+**Demo mode:** with `VITE_API_BASE_URL` empty, data is stored in the browser, and submitting an idea creates a queued pipeline run that nothing processes yet. Set the variable in `.env.local` to call the real backend. No UI changes are needed.
 
 ## Stack
 

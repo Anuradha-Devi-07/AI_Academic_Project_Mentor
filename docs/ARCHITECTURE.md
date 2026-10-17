@@ -1,6 +1,27 @@
 # ProjectMentor AI — Architecture
 
-This document covers Milestone 1, items 1–2: the research basis and the multi-agent system design. Items 3–4 (onboarding with skill assessment, and idea submission that triggers the pipeline) are implemented in this frontend and described in [Frontend implementation](#5-frontend-implementation).
+The project has seven modules. **Milestone 1** (weeks 1–2) covers:
+
+1. Studying agentic AI workflows and academic project mentoring methods (§1)
+2. Designing the multi-agent architecture, agent roles and student–project data models (§2–§4)
+3. Building student onboarding: profile creation and skill assessment (Module 1)
+4. Building idea submission and the trigger for the agent pipeline (Module 2, submission part)
+
+The agents themselves, and the mentor and report modules, are **designed** here but **built in later milestones**.
+
+---
+
+## 0. Modules and milestone status
+
+| # | Module | Kind | Milestone 1 status |
+|---|---|---|---|
+| 1 | Student Profile and Skill Assessment | Frontend module | ✅ Built: profile, self-ratings, skill quiz, readiness score |
+| 2 | Project Idea Submission and Feasibility Analysis Agent | Form + pipeline agent `feasibility` | ✅ Submission + pipeline trigger built · ⏳ agent designed |
+| 3 | Project Scope Definition and Technology Stack Recommendation Agent | Pipeline agent `scope_tech` | ⏳ Designed |
+| 4 | Milestone and Timeline Planning Agent | Pipeline agent `planner` | ⏳ Designed |
+| 5 | Risk Assessment and Mitigation Agent | Pipeline agent `risk` | ⏳ Designed |
+| 6 | Conversational Mentor Interaction | Interactive module (chat) | ⏳ Designed |
+| 7 | Documentation and Report Generation | Interactive module (on demand) | ⏳ Designed |
 
 ---
 
@@ -10,21 +31,23 @@ This document covers Milestone 1, items 1–2: the research basis and the multi-
 
 | Pattern | What it is | How we use it |
 |---|---|---|
-| **Orchestrator–workers** | A coordinator splits a task and hands sub-tasks to specialist agents, then combines their results. | The **Orchestrator** receives a submitted idea and runs six specialist agents. |
-| **Prompt chaining / DAG** | Each agent's output becomes the next agent's input, and agents that don't depend on each other run in parallel. | Agents are declared with `dependsOn`, and the orchestrator runs them in topological stages (§2.2). |
-| **Specialisation** | Narrow agents with focused prompts and tools beat one general prompt on reliability and are easier to evaluate. | One agent per mentoring concern: feasibility, stack, risk, plan, mentoring, documentation. |
-| **Human-in-the-loop** | People review or override agent output at checkpoints. | Students can edit their profile and re-run the analysis. Faculty review is planned for a later milestone. |
-| **Asynchronous runs + polling** | Long LLM jobs run in the background; the client polls (or subscribes to) run status. | `POST …/pipeline-runs` returns at once; the UI polls `GET /pipeline-runs/:id` and shows per-agent progress. |
+| **Orchestrator–workers** | A coordinator splits a task and hands sub-tasks to specialist agents, then combines their results. | The backend **Orchestrator** receives a pipeline run and runs the four analysis agents (modules 2–5). |
+| **Prompt chaining / DAG** | Each agent's output becomes the next agent's input, and agents that don't depend on each other run in parallel. | Agents declare `dependsOn`; the orchestrator runs them in topological stages (§2.2). |
+| **Specialisation** | Narrow agents with focused prompts are more reliable and easier to evaluate than one general prompt. | One agent per mentoring concern: feasibility, scope & stack, timeline, risk. |
+| **Conversational agents** | An agent that keeps a dialogue history and grounds its answers in shared context. | The Mentor (module 6) answers questions using the student profile and the pipeline results. |
+| **Human-in-the-loop** | People review or override agent output at checkpoints. | Students edit their profile and re-submit; faculty review is a later milestone. |
+| **Asynchronous runs + polling** | Long LLM jobs run in the background; the client polls run status. | `POST …/pipeline-runs` returns a queued run at once; the UI polls `GET /pipeline-runs/:id`. |
 
 ### 1.2 Academic project mentoring methodology
 
-These principles shape what the agents produce:
+These principles shape what the agents will produce:
 
-- **Scaffolding / zone of proximal development.** Guidance is pitched just above the student's current level. The skill assessment feeds every agent, so a beginner gets a tutorial-sized first step and an advanced student gets "prototype the riskiest part first".
-- **Milestone-based supervision.** Academic projects are assessed in phases (synopsis → design → implementation → testing → report). The planner always produces these phases, scaled to the available weeks.
-- **Early risk identification.** Supervisors ask "what could stop you?" in week 1. The Risk Assessor does the same, and every risk comes with a mitigation.
-- **Socratic mentoring.** The Mentor agent ends with a reflection question instead of only giving answers, which supports learning rather than replacing it.
-- **Academic integrity.** Generated synopsis text is labelled a *starting point to rewrite in your own words*.
+- **Scaffolding / zone of proximal development.** Guidance is pitched just above the student's current level, so the skill assessment (Module 1) is an input to every agent.
+- **Scope before solution.** Supervisors first agree the problem, users and boundaries, then the technology. Module 3 defines scope and stack together for this reason.
+- **Milestone-based supervision.** Projects are assessed in phases (synopsis → design → implementation → testing → report). The planner (Module 4) produces these phases, scaled to the weeks available.
+- **Early risk identification.** Supervisors ask "what could stop you?" in week 1. The risk agent (Module 5) gives every risk a mitigation.
+- **Socratic mentoring.** The mentor (Module 6) asks guiding questions instead of only giving answers, supporting learning rather than replacing it.
+- **Academic integrity.** Generated report text (Module 7) is a starting point the student must rewrite in their own words.
 
 ---
 
@@ -32,30 +55,32 @@ These principles shape what the agents produce:
 
 ### 2.1 Agent roles
 
-| Agent | `id` | Inputs | Output (`ProjectBlueprint` field) |
-|---|---|---|---|
-| Orchestrator | — | Project idea + student profile | Runs the DAG, tracks step status, assembles the blueprint |
-| Feasibility Analyst | `feasibility` | Idea, skills, hours, team size, duration | `feasibility` — score 0–100, verdict, notes |
-| Tech Stack Advisor | `tech_stack` | Idea domain, skills, feasibility | `techStack[]` — layer, choice, reason |
-| Risk Assessor | `risk` | Idea, skills, feasibility | `risks[]` — title, severity, mitigation |
-| Milestone Planner | `planner` | Duration, stack, risks | `milestones[]` — weeks, title, deliverables |
-| Mentor | `mentor` | Plan, assessment | `mentorTips[]` — first steps + reflection question |
-| Documentation Assistant | `documentation` | Everything above | `synopsis` — draft paragraph |
+| Module | Agent | `id` | Inputs | Output |
+|---|---|---|---|---|
+| — | Orchestrator (backend) | — | Pipeline run, project idea, student profile | Runs the DAG, updates step status, stores results |
+| 2 | Feasibility Analysis | `feasibility` | Idea, skills, weekly hours, duration | `FeasibilityResult`: score 0–100, verdict, notes |
+| 3 | Scope & Tech Stack | `scope_tech` | Idea, feasibility, skills | `ScopeAndStackResult`: problem, users, objectives, in/out of scope, success criteria, tech stack |
+| 4 | Milestone Planning | `planner` | Duration, scope & stack | `MilestonePlanResult`: milestones with weeks and deliverables |
+| 5 | Risk Assessment | `risk` | Idea, skills, scope & stack | `RiskResult`: risks with severity and mitigation |
+| 6 | Mentor chat | — (interactive) | Profile, pipeline results, conversation history | `MentorMessage` replies |
+| 7 | Report generation | — (on demand) | Profile, project, pipeline results | `ProjectReport` (synopsis, progress or final) |
 
-The source of truth for roles and dependencies is `src/agents/registry.ts`.
+The source of truth for agent roles and dependencies is `src/agents/registry.ts`.
 
 ### 2.2 Execution graph
 
 ```
-                 ┌──► Tech Stack Advisor ─┐
-Feasibility ─────┤                        ├──► Milestone Planner ──┬──► Mentor
-                 └──► Risk Assessor ──────┘                        └──► Documentation
-  stage 1             stage 2 (parallel)        stage 3                stage 4 (parallel)
+                                         ┌──► Milestone Planning (4)
+Feasibility (2) ──► Scope & Tech Stack (3)┤
+                                         └──► Risk Assessment (5)
+   stage 1               stage 2                 stage 3 (parallel)
+
+After the run completes:  Mentor chat (6)  ·  Report generation (7)
 ```
 
-A failure in one agent marks its step `failed`. Its dependants are not run, and the run's status becomes `failed`.
+When an agent fails, its step is marked `failed`, the agents that depend on it don't run, and the run's status becomes `failed`.
 
-### 2.3 Sequence: submitting an idea
+### 2.3 Sequence: submitting an idea (Milestone 1 = the trigger)
 
 ```
 Student        Frontend                         Backend / Orchestrator           Agents
@@ -63,35 +88,37 @@ Student        Frontend                         Backend / Orchestrator          
   │──────────────►│ POST /projects                     │                            │
   │               │───────────────────────────────────►│ store project              │
   │               │ POST /projects/:id/pipeline-runs   │                            │
-  │               │───────────────────────────────────►│ create run (queued) ──────►│ stage 1…4
-  │               │◄─────────────── 201 PipelineRun ───│                            │
+  │               │───────────────────────────────────►│ create run (queued)        │
+  │               │◄─────────────── 201 PipelineRun ───│ ───── later milestones ───►│ stage 1…3
   │  /projects/:id│ GET /pipeline-runs/:id  (poll 2s)  │◄──── step status updates ──│
   │◄──────────────│◄───────────────────────────────────│                            │
-  │ live progress │   … until status = completed       │ assemble blueprint         │
 ```
 
 ---
 
 ## 3. Data models
 
-TypeScript definitions live in `src/types/models.ts`. Summary:
+TypeScript definitions live in `src/types/models.ts`.
 
 ```
-StudentProfile 1 ──── * ProjectIdea 1 ──── * PipelineRun 1 ──── 6 AgentStep
-      │                                          │
-      └── SkillRating[]                          └── ProjectBlueprint (when completed)
-      └── SkillAssessment
+User 1 ── 1 StudentProfile 1 ──── * ProjectIdea 1 ──── * PipelineRun 1 ──── 4 AgentStep
+                │                          │                     │
+                ├── SkillRating[]          ├── * MentorMessage   └── PipelineResults (when completed)
+                └── SkillAssessment        └── * ProjectReport
 ```
 
-| Entity | Key fields |
-|---|---|
-| **StudentProfile** | `id`, `name`, `course?`, `year?`, `skills: SkillRating[]`, `priorProjects: none\|one\|several`, `weeklyHours`, `teamSize`, `assessment`, timestamps |
-| **SkillRating** | `skill`, `category: programming\|web\|data\|design\|tools`, `level: 1\|2\|3` (beginner/intermediate/advanced) |
-| **SkillAssessment** | `score 0–100`, `level: beginner\|intermediate\|advanced`, `strengths[]`, `growthAreas[]`, `assessedAt` |
-| **ProjectIdea** | `id`, `studentId`, `title`, `description`, `domain: ai_ml\|web\|mobile\|iot\|data\|other`, `durationWeeks`, `latestRunId?`, `createdAt` |
-| **PipelineRun** | `id`, `projectId`, `status: queued\|running\|completed\|failed`, `steps: AgentStep[]`, `blueprint?`, `createdAt`, `finishedAt?` |
-| **AgentStep** | `agentId`, `status`, `startedAt?`, `finishedAt?`, `summary?`, `error?` |
-| **ProjectBlueprint** | `feasibility`, `techStack[]`, `risks[]`, `milestones[]`, `mentorTips[]`, `synopsis` |
+| Entity | Key fields | Built in |
+|---|---|---|
+| **User** / **AuthSession** | `id`, `name`, `email` / `{ user, token }` | M1 |
+| **StudentProfile** | `id`, `userId`, `name`, `course`, `year`, `skills: SkillRating[]`, `priorProjects: none\|one\|several`, `weeklyHours`, `assessment`, timestamps | M1 |
+| **SkillRating** | `skill`, `category`, `selfLevel: 1\|2\|3`, `quiz?: { correct, total, level }`, `level` (quiz level if taken, else self-rating) | M1 |
+| **SkillAssessment** | `score 0–100`, `level: beginner\|intermediate\|advanced`, `strengths[]`, `growthAreas[]`, `verifiedShare`, `assessedAt` | M1 |
+| **ProjectIdea** | `id`, `studentId`, `title`, `description`, `domain: ai_ml\|web\|mobile\|iot\|data\|other`, `durationWeeks`, `latestRunId?`, `createdAt` | M1 |
+| **PipelineRun** | `id`, `projectId`, `status: queued\|running\|completed\|failed`, `steps: AgentStep[]`, `results?`, `createdAt`, `finishedAt?` | M1 (created as `queued`) |
+| **AgentStep** | `agentId: feasibility\|scope_tech\|planner\|risk`, `status`, `startedAt?`, `finishedAt?`, `summary?`, `error?` | M1 (created as `queued`) |
+| **PipelineResults** | `feasibility`, `scopeAndStack`, `plan`, `risk` (one result per agent, see §2.1) | Later |
+| **MentorMessage** | `id`, `projectId`, `role: student\|mentor`, `text`, `createdAt` | Later |
+| **ProjectReport** | `id`, `projectId`, `kind: synopsis\|progress\|final`, `content`, `createdAt` | Later |
 
 ### Skill quiz
 
@@ -99,11 +126,12 @@ Students first rate each skill themselves (`selfLevel`), then take a short multi
 
 - The bank has 39 questions: 3 for each of the 13 skills, one easy, one medium and one hard. Answer options are shuffled every time the quiz starts.
 - The quiz covers up to 5 skills (about 15 questions), starting with the highest self-rated, since an over-estimate there would hurt the plan most.
-- Each skill's level from the quiz is the sum of the difficulties answered correctly, out of 6. A score of 5–6 is advanced, 2–4 is intermediate and 0–1 is beginner.
-- `SkillRating.level` is the quiz level when there is one, otherwise the self-rating. All agents use `level`.
-- Skipping the quiz keeps the self-ratings and any earlier quiz results.
+- Each skill's quiz level is the sum of the difficulties answered correctly, out of 6. A score of 5–6 is advanced, 2–4 is intermediate and 0–1 is beginner.
+- `SkillRating.level` is the quiz level when there is one, otherwise the self-rating. The agents will use `level`.
+- The quiz is a required step of onboarding. Skills beyond the top 5 keep their self-rating, or an earlier quiz result.
+- In Edit profile, only skills that were added or whose self-rating changed are quizzed again, before saving. If no skills changed, the profile saves with no quiz. Removed skills need no test.
 
-Answers are currently shipped to the browser, which is fine for a self-check. For graded use, the backend should serve questions without answers and score them on the server.
+The answers currently ship to the browser, which is fine for a self-check. For graded use, the backend should serve questions without answers and score them on the server.
 
 ### Skill assessment scoring
 
@@ -121,41 +149,46 @@ The level is advanced at 70 or above, intermediate at 40–69, and beginner belo
 
 All bodies are JSON and use the models above. Errors return `{ "message": string }` with a 4xx/5xx status.
 
-| Method | Path | Body | Returns |
-|---|---|---|---|
-| `POST` | `/auth/register` | `{ name, email, password }` | `AuthSession` `{ user, token }` (409 if email exists) |
-| `POST` | `/auth/login` | `{ email, password }` | `AuthSession` (401 on bad credentials) |
-| `POST` | `/auth/logout` | — | 204 (invalidates token) |
-| `POST` | `/students` | Profile fields (+ client `assessment`) | `StudentProfile` |
-| `PUT` | `/students/:id` | Profile fields (+ client `assessment`) | `StudentProfile` |
-| `GET` | `/students/:id/projects` | — | `ProjectIdea[]` |
-| `POST` | `/projects` | `{ studentId, title, description, domain, durationWeeks }` | `ProjectIdea` |
-| `GET` | `/projects/:id` | — | `ProjectIdea` (incl. `latestRunId`) |
-| `POST` | `/projects/:id/pipeline-runs` | — | `PipelineRun` (status `queued`) — **pipeline trigger** |
-| `GET` | `/pipeline-runs/:id` | — | `PipelineRun` with live step statuses |
+| Method | Path | Body | Returns | Milestone |
+|---|---|---|---|---|
+| `POST` | `/auth/register` | `{ name, email, password }` | `AuthSession` (409 if email exists) | M1 |
+| `POST` | `/auth/login` | `{ email, password }` | `AuthSession` (401 on bad credentials) | M1 |
+| `POST` | `/auth/logout` | — | 204 (invalidates token) | M1 |
+| `POST` | `/auth/reset-password` | `{ email, password }` | 204, or 404 if no account has that email | M1 |
+| `POST` | `/students` | Profile fields (+ client `assessment`) | `StudentProfile` | M1 |
+| `PUT` | `/students/:id` | Profile fields (+ client `assessment`) | `StudentProfile` | M1 |
+| `GET` | `/students/:id/projects` | — | `ProjectIdea[]` | M1 |
+| `POST` | `/projects` | `{ studentId, title, description, domain, durationWeeks }` | `ProjectIdea` | M1 |
+| `GET` | `/projects/:id` | — | `ProjectIdea` (incl. `latestRunId`) | M1 |
+| `POST` | `/projects/:id/pipeline-runs` | — | `PipelineRun`, status `queued`: **the pipeline trigger** | M1 |
+| `GET` | `/pipeline-runs/:id` | — | `PipelineRun` with step statuses (and `results` when completed) | M1 (status) · later (results) |
+| `GET` / `POST` | `/projects/:id/mentor/messages` | `{ text }` | `MentorMessage[]` / reply | Later |
+| `POST` | `/projects/:id/reports` | `{ kind }` | `ProjectReport` | Later |
 
-**Authentication.** Every endpoint except `/auth/register` and `/auth/login` expects `Authorization: Bearer <token>` and acts only on the signed-in user's data (return 403/404 for anyone else's). A 401 makes the frontend clear the session and send the user to sign in. Passwords must be hashed server-side with bcrypt or argon2. Rate-limit the login endpoint.
+**Authentication.** Every endpoint except `/auth/register` and `/auth/login` expects `Authorization: Bearer <token>` and acts only on the signed-in user's data (return 403/404 for anyone else's). A 401 makes the frontend clear the session and send the user to sign in. Hash passwords on the server with bcrypt or argon2, and rate-limit the login endpoint.
+
+**Password reset — known risk.** The team chose a one-page reset: email + new password + confirm, with no emailed link or code. This means anyone who knows a student's email can change that student's password, and the 404 response reveals which emails have accounts. That is acceptable for the classroom demo only. Before real students use it, add an ownership check: email a 6-digit code or one-time link, have `/auth/reset-password` require it (single-use, expires in about 15–30 minutes), rate-limit the endpoint, and end the account's other sessions after a reset. The frontend form would then gain one "code" field.
 
 ---
 
-## 5. Frontend implementation
+## 5. Frontend implementation (Milestone 1)
 
 | Concern | File |
 |---|---|
-| Data models | `src/types/models.ts` |
-| Agent registry + DAG stages | `src/agents/registry.ts` |
-| Skill catalog + assessment scoring | `src/lib/skills.ts` |
+| Data models (incl. later-milestone contracts) | `src/types/models.ts` |
+| Agent registry, module list, DAG stages | `src/agents/registry.ts` |
+| Skill catalog, assessment scoring | `src/lib/skills.ts` |
+| Skill quiz questions and component | `src/lib/questionBank.ts`, `src/components/SkillQuiz.tsx` |
 | API client (real backend or demo mode) | `src/services/api.ts` |
-| Demo orchestrator (time-based, refresh-safe) | `src/services/demoPipeline.ts` |
-| Demo rule-based agents | `src/services/demoAgents.ts` |
-| Run polling hook | `src/hooks/usePipelineRun.ts` |
-| Onboarding: profile → skill check → assessment | `src/pages/Onboarding.tsx` |
+| Demo-mode pipeline trigger (creates queued runs) | `src/services/demoPipeline.ts` |
+| Run status hook (polls when a backend is connected) | `src/hooks/usePipelineRun.ts` |
+| Onboarding: details → skills → quiz → assessment; edit profile | `src/pages/Onboarding.tsx` |
 | Idea submission + pipeline trigger | `src/pages/CreateProject.tsx` |
-| Live pipeline progress + blueprint | `src/pages/ProjectRun.tsx` |
-| Project list | `src/pages/Projects.tsx` |
+| Submitted idea + pipeline status | `src/pages/ProjectRun.tsx` |
+| Dashboard, project list | `src/pages/Home.tsx`, `src/pages/Projects.tsx` |
 
-**Demo mode vs. real backend.** If `VITE_API_BASE_URL` is empty, everything runs in the browser and is stored in `localStorage`. The "agents" are deterministic rules that respond to the student's inputs, so the full flow can be shown and tested without a backend. Once the URL is set, `api.ts` calls the endpoints above, and no page code changes are needed.
+**Demo mode vs. real backend.** If `VITE_API_BASE_URL` is empty, data is stored in the browser's `localStorage`, and submitting an idea creates a pipeline run with all four steps `queued`. Nothing processes it, because the agents come in later milestones. Once the URL is set, `api.ts` calls the endpoints above, and the project page polls the run and shows step progress as the backend updates it. No page code changes are needed.
 
 **Accounts:** `src/services/auth.ts`, `src/auth/AuthContext.tsx` (`useAuth`, `RequireAuth`), `src/pages/Auth.tsx`, `src/components/UserMenu.tsx`. In demo mode, accounts live in this browser with salted SHA-256 hashes. That only makes the flow demonstrable; it is not real security.
 
-**Routes:** `/` · `/register` · `/sign-in` are public. `/onboarding` · `/create` · `/projects` · `/projects/:projectId` require sign-in.
+**Routes:** `/` · `/register` · `/sign-in` · `/forgot-password` are public. `/onboarding` · `/create` · `/projects` · `/projects/:projectId` require sign-in.
