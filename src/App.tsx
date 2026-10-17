@@ -5,6 +5,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { RequireAuth, useAuth } from './auth/AuthContext'
 import { Brand } from './components/ui'
 import { UserMenu } from './components/UserMenu'
+import { ThemeMenu } from './components/ThemeMenu'
 import { api } from './services/api'
 import type { StudentProfile } from './types/models'
 import Home from './pages/Home'
@@ -49,7 +50,6 @@ function App() {
   useEffect(() => { setProfile(api.getProfile()) }, [user?.id])
   useScrollManager()
 
-  const startPath = !user ? '/register' : profile ? '/create' : '/onboarding'
 
   return (
     <div className="app-shell" id="top">
@@ -61,11 +61,11 @@ function App() {
             <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/" end>Home</NavLink>
             {user ? <>
               <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/projects" end>My projects</NavLink>
-              <Link className="button button-small button-light" to={startPath}>{profile ? 'New idea' : 'Finish setup'} <ArrowUpRight size={15} /></Link>
               <UserMenu />
             </> : <>
               <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/sign-in">Sign in</NavLink>
               <Link className="button button-small button-light" to="/register">Get started <ArrowUpRight size={15} /></Link>
+              <ThemeMenu />
             </>}
           </nav>
         </div>

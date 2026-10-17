@@ -65,7 +65,6 @@ function Dashboard({ name, profile }: { name: string; profile: StudentProfile | 
 
   const recent = projects?.slice(0, 5) ?? []
   const verified = profile?.skills.filter(s => s.quiz).length ?? 0
-  const editLink = { pathname: '/onboarding', search: '?edit=1' }
   const details = profile && [`${profile.course} · ${profile.year}`, `${profile.weeklyHours} h/week`].join('  ·  ')
 
   return (
@@ -126,7 +125,7 @@ function Dashboard({ name, profile }: { name: string; profile: StudentProfile | 
         {profile && (
           <div className="dash-col">
             <section className="panel" aria-labelledby="dash-skills">
-              <div className="panel-head"><h2 id="dash-skills">Your skills</h2><Link className="link-button" to={editLink} state={{ from: '/' }}>Edit</Link></div>
+              <div className="panel-head"><h2 id="dash-skills">Your skills</h2></div>
               <SkillMix levels={profile.skills.map(s => s.level)} />
               <ul className="skill-rows">{profile.skills.map(s => (
                 <li key={s.skill}>
@@ -203,7 +202,7 @@ function ReadinessPanel({ profile }: { profile: StudentProfile }) {
 
   return (
     <section className="panel" aria-labelledby="dash-readiness">
-      <div className="panel-head"><h2 id="dash-readiness"><TrendingUp size={17} /> How to raise your readiness</h2><Link className="link-button" to={{ pathname: '/onboarding', search: '?edit=1' }} state={{ from: '/' }}>Update</Link></div>
+      <div className="panel-head"><h2 id="dash-readiness"><TrendingUp size={17} /> How to raise your readiness</h2><Link className="link-button" to={{ pathname: '/onboarding', search: '?edit=skills' }} state={{ from: '/' }}>Update</Link></div>
       <p className="panel-sub readiness-intro">You're at <strong>{score}/100</strong> — {LEVEL_LABELS[level]}. Do these to improve:</p>
 
       <ul className="actions">{actions.map(a => (

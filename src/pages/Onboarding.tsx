@@ -39,6 +39,8 @@ export default function Onboarding({ profile, onSaved }: { profile: StudentProfi
   const [params] = useSearchParams()
   const returnTo = (useLocation().state as { from?: string } | null)?.from
   const editParam = params.get('edit')
+  // `?edit=skills` (from the readiness card) shows only what affects readiness: skills, past projects, hours.
+  const skillsOnly = editParam === 'skills'
   const [step, setStep] = useState<Step>(!profile ? 'about' : editParam ? 'edit' : 'result')
   // True while re-testing skills that were changed in Edit profile (as opposed to first-time setup).
   const [retesting, setRetesting] = useState(false)
@@ -113,7 +115,9 @@ export default function Onboarding({ profile, onSaved }: { profile: StudentProfi
       ? { title: 'Check your updated skills', text: `A few quick questions on the skill${changedSkills.length === 1 ? '' : 's'} you changed. Your other quiz results are kept.` }
       : { title: 'Skill quiz', text: "A few quick questions verify your ratings. It's a check-up, not an exam." },
     result: { title: 'Your skill check', text: 'The agents use this to tailor their analysis of your project idea.' },
-    edit: { title: 'Edit profile', text: 'Update your details and skills, then save. Your quiz results are kept.' },
+    edit: skillsOnly
+      ? { title: 'Update your skills', text: 'Change your skills, past projects or weekly hours to update your readiness score.' }
+      : { title: 'Edit profile', text: 'Update your details and skills, then save. Your quiz results are kept.' },
   }[step]
 
   return (
@@ -134,7 +138,7 @@ export default function Onboarding({ profile, onSaved }: { profile: StudentProfi
           : step === 'quiz' ? <SkillQuiz skills={quizSkills} onComplete={results => save(results)} saving={isSubmitting} error={errors.root?.message} />
           : (
           <form className="form-card" onSubmit={e => { e.preventDefault(); if (editing) saveEdit(); else if (step === 'about') goToSkills(); else goToQuiz() }} noValidate>
-            {(step === 'about' || editing) && <>
+            {(step === 'about' || (editing && !skillsOnly)) && <>
               <label>What should we call you? <span className="required-mark" aria-hidden="true">*</span>
                 <input {...register('name', recheck('name'))} placeholder="Your name" autoComplete="given-name" aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} autoFocus />
                 {errors.name && <span className="field-error" id="name-error"><CircleAlert size={13} /> {errors.name.message}</span>}

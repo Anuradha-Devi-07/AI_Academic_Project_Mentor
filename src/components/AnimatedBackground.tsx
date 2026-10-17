@@ -8,7 +8,12 @@ import { useEffect, useRef } from 'react'
  */
 
 // One calm colour family (blue · indigo · sky) keeps the effect professional rather than playful.
-const palette = { nodes: ['96, 165, 250', '129, 140, 248', '56, 189, 248'], spot: '59, 130, 246', trail: 'rgba(147, 197, 253, .5)', core: '#dbeafe', glow: 'rgba(96, 165, 250, 1)', streak: '191, 219, 254' }
+// The light theme uses deeper shades so the network stays visible on a light background.
+const PALETTES = {
+  dark: { nodes: ['96, 165, 250', '129, 140, 248', '56, 189, 248'], spot: '59, 130, 246', trail: 'rgba(147, 197, 253, .5)', core: '#dbeafe', glow: 'rgba(96, 165, 250, 1)', streak: '191, 219, 254' },
+  light: { nodes: ['37, 99, 235', '79, 70, 229', '2, 132, 199'], spot: '37, 99, 235', trail: 'rgba(37, 99, 235, .45)', core: '#1d4ed8', glow: 'rgba(37, 99, 235, .7)', streak: '37, 99, 235' },
+}
+const currentPalette = () => PALETTES[document.documentElement.dataset.theme === 'light' ? 'light' : 'dark']
 const LINK_DISTANCE = 140
 const MOUSE_DISTANCE = 200
 const SPOTLIGHT_RADIUS = 320
@@ -49,6 +54,10 @@ export function AnimatedBackground() {
     let pulses: Pulse[] = []
     let streaks: Streak[] = []
     let lastStreak = 0
+    let palette = currentPalette()
+    // Re-colour instantly when the theme preference changes.
+    const themeObserver = new MutationObserver(() => { palette = currentPalette(); if (reduceMotion) draw() })
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     let width = 0, height = 0, frame = 0
 
     const resize = () => {
@@ -178,6 +187,7 @@ export function AnimatedBackground() {
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
       cancelAnimationFrame(frame)
+      themeObserver.disconnect()
       window.removeEventListener('resize', onResize)
       window.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerleave', onLeave)
