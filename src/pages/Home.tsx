@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, BrainCircuit, Calculator, Check, ChevronDown, ChevronRight, ClipboardCheck, Clock3, FolderKanban, Gauge, Lightbulb, Orbit, Package, Plus, Rocket, Sprout, Target, TrendingUp, UsersRound, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { api } from '../services/api'
-import { DOMAIN_LABELS, LEVEL_LABELS, PROFICIENCY_LABELS, readinessBreakdown } from '../lib/skills'
+import { LEVEL_LABELS, PROFICIENCY_LABELS, projectTypeLabel, readinessBreakdown } from '../lib/skills'
 import type { Proficiency, ProjectIdea, RunStatus, StudentProfile } from '../types/models'
 
 const RUN_LABELS: Record<RunStatus, string> = { queued: 'Queued', running: 'In progress', completed: 'Completed', failed: 'Failed' }
@@ -97,7 +97,7 @@ function Dashboard({ name, profile }: { name: string; profile: StudentProfile | 
               : recent.length === 0 ? <p className="panel-empty">No projects yet.{profile && <> <Link className="link-button" to="/create">Submit your first idea</Link></>}</p>
                 : <ul className="row-list">{recent.map(p => (
                   <li key={p.id}><Link to={`/projects/${p.id}`}>
-                    <div><strong>{p.title}</strong><span>{DOMAIN_LABELS[p.domain]} · {p.durationWeeks} weeks · {new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span></div>
+                    <div><strong>{p.title}</strong><span>{projectTypeLabel(p)} · {p.durationWeeks} weeks · {new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span></div>
                     <span className="row-end">{p.runStatus && <span className={`run-status ${p.runStatus}`}>{RUN_LABELS[p.runStatus]}</span>}<ChevronRight size={18} /></span>
                   </Link></li>
                 ))}</ul>}
@@ -118,7 +118,6 @@ function Dashboard({ name, profile }: { name: string; profile: StudentProfile | 
               <blockquote>{EXAMPLE_IDEA.map((part, i) => part.tip ? <mark key={i} className={`tip-${part.tip}`}>{part.text}</mark> : <span key={i}>{part.text}</span>)}</blockquote>
               <ul className="example-legend">{IDEA_TIPS.map((t, i) => <li key={t.key} className={`tip-${t.key}`}><i /> {i + 1}. {t.title}</li>)}</ul>
             </details>
-            {profile && <Link className="button button-ghost tips-cta" to="/create">Write your idea <ArrowRight size={16} /></Link>}
           </section>
         </div>
 

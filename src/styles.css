@@ -221,6 +221,25 @@ main:focus { outline: none; }
 .tip-icon { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: 9px; color: var(--tip); background: var(--tip-soft); }
 .tips li > div { display: grid; gap: 4px; align-content: start; min-width: 0; }
 .tips strong { display: flex; align-items: center; gap: 6px; font-size: 15px; }
+.desc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.desc-head .field-label { padding-top: 7px; }
+.form-card label.desc-box { display: block; margin-bottom: 20px; }
+.voice-input { display: grid; justify-items: end; gap: 6px; min-width: 0; }
+.voice-row { display: flex; gap: 8px; }
+.voice-select, .form-card .voice-select { width: auto; padding: 6px 28px 6px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; }
+.voice-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--accent); border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-text); font-size: 13px; font-weight: 600; }
+.voice-btn:hover { background: var(--accent); color: #fff; }
+.voice-btn.stop { border-color: var(--danger-border); background: var(--danger-soft); color: var(--danger); animation: mic-pulse 1.4s ease-out infinite; }
+@keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, .45); } 100% { box-shadow: 0 0 0 10px rgba(248, 113, 113, 0); } }
+.voice-status { display: flex; align-items: center; gap: 8px; max-width: 420px; margin: 0; font-size: 13px; color: var(--text-3); text-align: right; }
+.voice-status em { color: var(--text-2); }
+.voice-status.error { color: var(--danger); }
+.voice-note { font-size: 12px; color: var(--text-3); padding-top: 8px; }
+.voice-wave { display: inline-flex; align-items: center; gap: 3px; height: 16px; }
+.voice-wave i { width: 3px; height: 100%; border-radius: 3px; background: var(--accent-text); animation: wave 1s ease-in-out infinite; }
+.voice-wave i:nth-child(2) { animation-delay: -.8s; } .voice-wave i:nth-child(3) { animation-delay: -.6s; } .voice-wave i:nth-child(4) { animation-delay: -.4s; } .voice-wave i:nth-child(5) { animation-delay: -.2s; }
+@keyframes wave { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .voice-btn.stop, .voice-wave i { animation: none; } }
 .tip-num { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--tip); color: var(--on-bright); font-size: 11px; font-weight: 700; }
 .tips li > div > span { font-size: 13px; line-height: 1.55; color: var(--text-3); }
 .idea-example { margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
@@ -234,7 +253,6 @@ main:focus { outline: none; }
 .example-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0 16px 14px; font-size: 13px; color: var(--text-3); }
 .example-legend li { display: flex; align-items: center; gap: 6px; }
 .example-legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--tip); display: inline-block; }
-.tips-cta { width: 100%; margin-top: 14px; }
 .skill-rows { list-style: none; display: grid; margin: 0; padding: 6px 0 0; border-top: 1px solid var(--border); }
 .skill-rows li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 14px; }
 .skill-rows li + li { border-top: 1px solid var(--border); }
@@ -322,6 +340,11 @@ main:focus { outline: none; }
 .profile-line strong { color: var(--text); }
 .profile-line a { color: var(--accent-text); font-weight: 600; }
 .profile-line a:hover { text-decoration: underline; }
+.draft-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--accent-border); border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--text-2); font-size: 14px; }
+.draft-note svg { color: var(--accent-text); flex-shrink: 0; }
+.draft-note .link-button { margin-left: auto; font-size: 13px; }
+.next-hint { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 0 0; font-size: 13px; color: var(--text-3); text-align: center; }
+.next-hint svg { color: var(--accent-text); flex-shrink: 0; }
 .idea-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 0 28px; align-items: start; }
 .idea-side .choice-group { margin-bottom: 16px; }
 @media (max-width: 860px) { .idea-grid { grid-template-columns: 1fr; } }
@@ -359,6 +382,7 @@ main:focus { outline: none; }
 .choice-group { min-width: 0; margin: 0 0 20px; padding: 0; border: 0; }
 .choice-group legend { margin-bottom: 10px; padding: 0; }
 .choice-group .skill-options { margin-bottom: 0; }
+.form-card label.custom-domain { display: grid; gap: 6px; margin: 12px 0 0; }
 
 /* Segmented control (skill levels, experience) */
 .segmented { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--muted-bg); }
@@ -366,7 +390,9 @@ main:focus { outline: none; }
 .segmented.wide label { flex: 1; justify-content: center; }
 .form-card .segmented label { display: flex; align-items: center; margin: 0; padding: 7px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: background .15s, color .15s; }
 .form-card .segmented label:hover { color: var(--text); }
-.form-card .segmented label.on { background: var(--surface); color: var(--accent-text); font-weight: 600; box-shadow: var(--shadow-sm); }
+.form-card .segmented label.on { background: var(--accent); color: #fff; font-weight: 600; box-shadow: var(--shadow-sm); }
+.form-card .segmented label.on::before { content: "✓"; margin-right: 6px; font-size: 12px; }
+.form-card .segmented label.on:hover { color: #fff; }
 .form-card .segmented label:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 .segmented label { position: relative; }
 .segmented input, .form-card .segmented input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
@@ -465,6 +491,21 @@ main:focus { outline: none; }
 .run-actions { display: flex; flex-shrink: 0; gap: 10px; }
 
 .project-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.project-item { display: flex; align-items: stretch; gap: 8px; }
+.project-item .project-row { flex: 1; min-width: 0; }
+.project-row div { min-width: 0; }
+.project-row strong { overflow-wrap: anywhere; }
+.delete-btn { flex-shrink: 0; width: 48px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-3); transition: color .15s, border-color .15s, background .15s; }
+.delete-btn:hover, .delete-btn:focus-visible { border-color: var(--danger-border); background: var(--danger-soft); color: var(--danger); }
+.confirm-dialog { width: min(440px, calc(100vw - 32px)); }
+.confirm-dialog .score-dialog-head h2 svg { color: var(--danger); }
+.confirm-body { display: grid; gap: 18px; padding: 20px; }
+.confirm-body p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-2); overflow-wrap: anywhere; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.button-danger { background: #dc2626; color: #fff; }
+.button-danger:hover { background: #b91c1c; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 8px; padding: 12px 18px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-md); animation: dialog-in .18s ease-out; }
+.toast svg { color: var(--accent-text); }
 .project-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); transition: border-color .15s, box-shadow .15s; }
 .project-row:hover { border-color: var(--accent-border); box-shadow: var(--shadow-md); }
 .project-row div { display: grid; gap: 4px; }

@@ -7,7 +7,7 @@
 import { assessSkills } from '../lib/skills'
 import { load, newId, save } from '../lib/storage'
 import type { NewProjectIdea, PipelineRun, ProjectIdea, StudentProfile } from '../types/models'
-import { getDemoRun, triggerDemoRun } from './demoPipeline'
+import { deleteDemoRuns, getDemoRun, triggerDemoRun } from './demoPipeline'
 import { ApiError, http, isDemoMode } from './http'
 import { getSession } from './session'
 
@@ -91,6 +91,14 @@ export const api = {
     const stored = { ...project, latestRunId: run.id }
     cacheProject(uid, stored)
     return { project: stored, run }
+  },
+
+  /** Deletes a project and its pipeline runs. */
+  async deleteProject(id: string): Promise<void> {
+    const uid = userId()
+    if (!isDemoMode) await http<void>(`/projects/${id}`, { method: 'DELETE' })
+    else deleteDemoRuns(id)
+    save(projectsKey(uid), readProjects(uid).filter(p => p.id !== id))
   },
 
   /** Triggers a new agent pipeline run for an existing project. */

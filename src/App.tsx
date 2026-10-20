@@ -58,7 +58,7 @@ function App() {
         <div className="nav-inner">
           <Brand />
           <nav aria-label="Main" className="nav-bar">
-            <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/" end>Home</NavLink>
+            <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/" end>{user ? 'Dashboard' : 'Home'}</NavLink>
             {user ? <>
               <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/projects" end>My projects</NavLink>
               <UserMenu />

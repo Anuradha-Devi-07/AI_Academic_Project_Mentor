@@ -32,6 +32,10 @@ export const DOMAIN_LABELS: Record<ProjectDomain, string> = {
   other: 'Something else',
 }
 
+/** Display name of a project's type: the student's own wording for "Something else". */
+export const projectTypeLabel = (p: { domain: ProjectDomain; customDomain?: string }) =>
+  p.domain === 'other' && p.customDomain ? p.customDomain : DOMAIN_LABELS[p.domain]
+
 export const EXPERIENCE_LABELS: Record<PriorExperience, string> = {
   none: 'Not yet',
   one: 'One project',
