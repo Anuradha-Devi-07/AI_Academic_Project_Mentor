@@ -6,6 +6,7 @@ import { RequireAuth, useAuth } from './auth/AuthContext'
 import { Brand } from './components/ui'
 import { UserMenu } from './components/UserMenu'
 import { ThemeMenu } from './components/ThemeMenu'
+import { SiteFooter } from './components/SiteFooter'
 import { api } from './services/api'
 import type { StudentProfile } from './types/models'
 import Home from './pages/Home'
@@ -46,6 +47,7 @@ function App() {
   const location = useLocation()
   const { user } = useAuth()
   const [profile, setProfile] = useState<StudentProfile | null>(() => api.getProfile())
+  const isLanding = location.pathname === '/' && !user
   // Each account has its own profile: reload it whenever someone signs in or out.
   useEffect(() => { setProfile(api.getProfile()) }, [user?.id])
   useScrollManager()
@@ -58,9 +60,10 @@ function App() {
         <div className="nav-inner">
           <Brand />
           <nav aria-label="Main" className="nav-bar">
-            <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/" end>Home</NavLink>
+            <NavLink className={({ isActive }) => isActive ? 'nav-link nav-home active' : 'nav-link nav-home'} to="/" end>Home</NavLink>
             {user ? <>
               <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/projects" end>My projects</NavLink>
+              <Link className="button button-small button-light nav-create" to="/create">New idea <ArrowUpRight size={14} /></Link>
               <UserMenu />
             </> : <>
               <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/sign-in">Sign in</NavLink>
@@ -72,7 +75,7 @@ function App() {
       </header>
 
       <AnimatePresence mode="wait">
-        <motion.main id="main" tabIndex={-1} key={location.pathname} className="page section-wrap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .15 }}>
+        <motion.main id="main" tabIndex={-1} key={location.pathname} className={isLanding ? 'page landing-page' : 'page section-wrap'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .15 }}>
           <Routes location={location}>
             <Route path="/" element={<Home profile={profile} />} />
             <Route path="/register" element={<Register />} />
@@ -86,6 +89,7 @@ function App() {
           </Routes>
         </motion.main>
       </AnimatePresence>
+      <SiteFooter />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Check, CircleAlert, Clock3, LoaderCircle, Plus, Send } from 'lucide-react'
 import { AGENTS, INTERACTIVE_MODULES } from '../agents/registry'
+import { PipelineGraph } from '../components/PipelineGraph'
 import { errorMessage } from '../components/ui'
 import { usePipelineRun } from '../hooks/usePipelineRun'
 import { api } from '../services/api'
@@ -86,10 +87,15 @@ function PipelinePanel({ run }: { run: PipelineRun }) {
       </div>
       <p className="pipeline-note" aria-live="polite">
         {run.status === 'queued'
-          ? <>Your idea has been submitted and the agent pipeline was triggered on {formatDate(run.createdAt)}. The agents below will analyse it in order; their results will appear here once they're connected.</>
+          ? <>Your idea has been submitted and the agent pipeline was triggered on {formatDate(run.createdAt)}. The designed pipeline runs in stages, with planning and risk review in parallel; results appear here when a connected backend processes this run.</>
           : run.status === 'completed' ? 'All agents have finished.' : run.status === 'failed' ? 'The pipeline stopped before finishing.' : 'The agents are working on your idea.'}
       </p>
 
+      <PipelineGraph steps={run.steps} />
+      <div className="pipeline-detail-head">
+        <h3>Agent status details</h3>
+        <p>Current status and messages returned for this run.</p>
+      </div>
       <ol className="agent-steps">
         {AGENTS.map((agent, i) => {
           const step = steps.get(agent.id)

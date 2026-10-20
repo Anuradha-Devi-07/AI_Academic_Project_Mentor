@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ArrowUpRight, CircleAlert, LoaderCircle, Plus } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, CircleAlert, FolderKanban, LoaderCircle, Plus } from 'lucide-react'
 import { errorMessage } from '../components/ui'
 import { api } from '../services/api'
 import { DOMAIN_LABELS } from '../lib/skills'
@@ -21,8 +21,10 @@ export default function Projects() {
 
   if (!projects.length) return (
     <div className="empty-state">
-      <h1>No projects yet</h1>
-      <p>Submit a rough idea and it will be sent to the agent pipeline for analysis.</p>
+      <span className="empty-state-icon"><FolderKanban size={23} /></span>
+      <span className="muted-label">YOUR WORKSPACE</span>
+      <h1>Your first project starts with an idea.</h1>
+      <p>Share a rough idea to save it here and create a pipeline run. In demo mode, that run stays queued.</p>
       <Link className="button button-primary" to={api.getProfile() ? '/create' : '/onboarding'}>Start my first project <ArrowRight size={16} /></Link>
     </div>
   )
@@ -30,15 +32,25 @@ export default function Projects() {
   return (
     <>
       <header className="page-header">
-        <div><h1>My projects</h1></div>
+        <div><span className="muted-label">YOUR WORKSPACE</span><h1>My projects</h1><p>Ideas you have submitted and their current pipeline availability.</p></div>
         <div className="run-actions"><Link className="button button-primary" to="/create"><Plus size={16} /> New idea</Link></div>
       </header>
-      <ul className="project-list">
+      <ul className="projects-workspace">
         {projects.map(p => (
           <li key={p.id}>
-            <Link to={`/projects/${p.id}`} className="project-row">
-              <div><strong>{p.title}</strong><span>{DOMAIN_LABELS[p.domain]} · {p.durationWeeks} weeks · {new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>
-              <ArrowUpRight size={17} />
+            <Link to={`/projects/${p.id}`} className="project-card">
+              <span className="project-card-main">
+                <strong>{p.title}</strong>
+                <span className="project-card-meta">
+                  <span className="project-card-domain">{DOMAIN_LABELS[p.domain]}</span>
+                  <span>{p.durationWeeks} weeks</span>
+                  <span>Submitted {new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                </span>
+                <span className={`project-card-state ${p.latestRunId ? 'available' : ''}`}>
+                  <span aria-hidden="true" /> {p.latestRunId ? 'Pipeline run available' : 'Not yet sent for analysis'}
+                </span>
+              </span>
+              <span className="project-card-arrow" aria-hidden="true"><ArrowUpRight size={17} /></span>
             </Link>
           </li>
         ))}
