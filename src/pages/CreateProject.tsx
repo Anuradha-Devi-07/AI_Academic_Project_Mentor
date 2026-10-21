@@ -4,8 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, CircleAlert, GraduationCap, LoaderCircle, RotateCcw, Send, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, CircleAlert, GraduationCap, LoaderCircle, Send, Sparkles } from 'lucide-react'
 import { FlowSteps, errorMessage } from '../components/ui'
 import { VoiceInput } from '../components/VoiceInput'
+import { pipelineStages } from '../agents/registry'
 import { api } from '../services/api'
 import { load, remove, save } from '../lib/storage'
 import { DOMAIN_LABELS, LEVEL_LABELS } from '../lib/skills'
@@ -52,6 +54,8 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
   // The setup tracker only matters before the first idea; hide it for returning students.
   const [isFirstIdea, setIsFirstIdea] = useState<boolean | null>(null)
   const { register, handleSubmit, watch, setValue, getValues, reset, formState: { errors, isSubmitting, isSubmitted }, setError } = useForm<IdeaForm>({
+  const stages = pipelineStages()
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setError } = useForm<IdeaForm>({
     resolver: zodResolver(ideaSchema),
     mode: 'onSubmit',
     reValidateMode: 'onChange',
@@ -101,9 +105,12 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
       <div className="form-shell create-shell">
         <div className="form-intro create-head">
           <div>
+            <span className="muted-label"><Sparkles size={13} /> PROJECT STUDIO</span>
             <h1>New project idea</h1>
             <p>Describe your idea in two or three sentences, in English or your own language. It doesn't need to be perfect.</p>
             <p className="profile-line"><GraduationCap size={14} /> Planning for <strong>{profile.name}</strong> · {LEVEL_LABELS[profile.assessment.level]} · {profile.weeklyHours}h/week · <Link to="/onboarding?edit=skills" state={{ from: '/create' }}>Edit</Link></p>
+            <p>Start with the problem. A clear first draft is more useful than a perfect one.</p>
+            <p className="profile-line"><GraduationCap size={14} /> Planning for <strong>{profile.name}</strong> · {LEVEL_LABELS[profile.assessment.level]} · {profile.weeklyHours}h/week · <Link to="/onboarding?edit=1" state={{ from: '/create' }}>Edit</Link></p>
           </div>
           {isFirstIdea && <FlowSteps current={2} />}
         </div>
@@ -161,6 +168,18 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
           {errors.root && <p className="form-error" role="alert"><CircleAlert size={15} /> {errors.root.message}</p>}
           <button className="button button-primary form-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? <><LoaderCircle size={16} className="spin" /> Submitting…</> : <><Send size={16} /> Submit idea</>}</button>
           <p className="next-hint"><Sparkles size={14} /> Next: AI agents review its feasibility, scope, timeline &amp; risks.</p>
+          <aside className="create-preview" aria-labelledby="create-preview-title">
+            <h3 id="create-preview-title"><Sparkles size={16} /> What happens next</h3>
+            <p>Your submission creates a project and a pipeline run. These are the designed analysis roles; demo-mode runs remain queued.</p>
+            <ol className="create-preview-steps">
+              {stages.flatMap((stage, index) => stage.map(agent => (
+                <li key={agent.id}>
+                  <agent.icon size={16} />
+                  <span><strong>{agent.name}</strong>{agent.role}{index > 0 && stage.length > 1 ? ' (parallel stage)' : ''}</span>
+                </li>
+              )))}
+            </ol>
+          </aside>
           </div>
         </form>
       </div>

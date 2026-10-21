@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f1115" />
+    <meta name="theme-color" content="#0B0D12" />
     <script>
       // Apply the saved theme preference (dark by default) before first paint so the page never flashes.
       (function () {
@@ -11,7 +11,7 @@
         try { pref = JSON.parse(localStorage.getItem('projectmentor:theme')) || 'dark' } catch (e) {}
         var theme = pref === 'system' ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : pref === 'light' ? 'light' : 'dark'
         document.documentElement.dataset.theme = theme
-        if (theme === 'light') document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f6f7f9')
+        if (theme === 'light') document.querySelector('meta[name="theme-color"]').setAttribute('content', '#F7F6F2')
       })()
     </script>
     <meta name="description" content="Turn your academic project idea into a clear, actionable plan with AI-powered project mentoring." />
@@ -19,6 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="root"></div>

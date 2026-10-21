@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BrainCircuit, Calculator, Check, ChevronDown, ChevronRight, ClipboardCheck, Clock3, FolderKanban, Gauge, Lightbulb, Orbit, Package, Plus, Rocket, Sprout, Target, TrendingUp, UsersRound, X, type LucideIcon } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BrainCircuit, Calculator, Check, ChevronDown, ChevronRight, ClipboardCheck, Clock3, FolderKanban, Gauge, Lightbulb, Orbit, Package, Plus, Rocket, ShieldCheck, Sparkles, Sprout, Target, TrendingUp, UsersRound, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { api } from '../services/api'
 import { LEVEL_LABELS, PROFICIENCY_LABELS, projectTypeLabel, readinessBreakdown } from '../lib/skills'
+import { pipelineStages } from '../agents/registry'
+import { DOMAIN_LABELS, LEVEL_LABELS, PROFICIENCY_LABELS, readinessBreakdown } from '../lib/skills'
 import type { Proficiency, ProjectIdea, RunStatus, StudentProfile } from '../types/models'
 
 const RUN_LABELS: Record<RunStatus, string> = { queued: 'Queued', running: 'In progress', completed: 'Completed', failed: 'Failed' }
@@ -25,6 +27,16 @@ const EXAMPLE_IDEA: { text: string; tip?: string }[] = [
   { text: "using the timetable data from the admin office.", tip: 'needs' },
 ]
 
+const WORKFLOW = [
+  { icon: Lightbulb, title: 'Your idea', text: 'Start with a problem worth solving.' },
+  { icon: BrainCircuit, title: 'Feasibility', text: 'Consider your skills and available time.' },
+  { icon: Orbit, title: 'Scope & technology', text: 'Define a manageable scope and stack.' },
+  { icon: Clock3, title: 'Milestones', text: 'Break the work into achievable steps.' },
+  { icon: ShieldCheck, title: 'Risks', text: 'Surface likely blockers and mitigations.' },
+  { icon: Check, title: 'Project blueprint', text: 'Bring the planning into one view.' },
+]
+const PIPELINE_STAGES = pipelineStages()
+
 /** Signed out: a short welcome. Signed in: the student's dashboard. */
 export default function Home({ profile }: { profile: StudentProfile | null }) {
   const { user } = useAuth()
@@ -33,19 +45,101 @@ export default function Home({ profile }: { profile: StudentProfile | null }) {
 
 function Welcome() {
   return (
-    <div className="welcome-card">
-      <span className="welcome-mark"><Orbit size={24} /></span>
-      <h1>Plan your academic project with AI</h1>
-      <p>Share a rough idea and get a plan tailored to your skills.</p>
-      <ul className="check-list">
-        <li><Check size={16} /> Create your profile and take a short skill check</li>
-        <li><Check size={16} /> Submit your project idea in a few sentences</li>
-        <li><Check size={16} /> AI agents review its feasibility, scope, timeline and risks</li>
-      </ul>
-      <div className="welcome-actions">
-        <Link className="button button-primary" to="/register">Create account</Link>
-        <Link className="button button-ghost" to="/sign-in">Sign in</Link>
-      </div>
+    <div className="landing">
+      <section className="landing-hero">
+        <div className="landing-wrap landing-hero-inner">
+          <div className="landing-copy">
+            <span className="landing-eyebrow"><Sparkles size={15} /> A clearer path from idea to impact</span>
+            <h1>Make your next academic project <em>feel possible.</em></h1>
+            <p className="landing-lead">Turn an early idea into a focused plan shaped around your skills, time, and the problem you want to solve.</p>
+            <div className="landing-cta">
+              <Link className="button button-primary" to="/register">Start planning <ArrowRight size={16} /></Link>
+              <Link className="button button-ghost" to="/sign-in">Sign in</Link>
+              <span className="landing-cta-note">A guided workspace for student projects</span>
+            </div>
+          </div>
+
+          <section className="landing-preview" aria-label="Preview of the project planning workflow">
+            <div className="landing-preview-head">
+              <div><span className="muted-label">PROJECT WORKSPACE</span><strong>From first thought to a plan</strong></div>
+              <span className="landing-preview-badge">Workflow preview</span>
+            </div>
+            <ol className="landing-workflow">
+              {WORKFLOW.map((step, index) => (
+                <li className={`landing-workflow-step ${index === 0 ? 'on' : ''}`} key={step.title}>
+                  <span className="landing-wf-icon"><step.icon size={17} /></span>
+                  <span className="landing-wf-body"><strong>{step.title}</strong><span>{step.text}</span></span>
+                  <span className="landing-wf-status">{index === 0 ? 'Start' : 'Planned'}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="landing-preview-note">A preview of the designed workflow—not a claim that analysis has already run.</p>
+          </section>
+        </div>
+      </section>
+
+      <section className="landing-section landing-wrap" aria-labelledby="landing-how-title">
+        <div className="landing-section-head">
+          <span className="muted-label">A PRACTICAL STARTING POINT</span>
+          <h2 id="landing-how-title">Good project work starts with a plan that fits you.</h2>
+          <p>Build a student profile, check your skills, and share a rough idea. The workspace keeps your submission and its pipeline status together.</p>
+        </div>
+        <div className="landing-features">
+          <article className="landing-feature">
+            <span className="landing-feature-icon"><Gauge size={20} /></span>
+            <h3>Start with your strengths</h3>
+            <p>Record your skills, experience, and available weekly hours so planning has useful context.</p>
+          </article>
+          <article className="landing-feature">
+            <span className="landing-feature-icon"><Lightbulb size={20} /></span>
+            <h3>Shape an idea without overthinking it</h3>
+            <p>Use practical prompts to describe the problem, who it affects, and a sensible first version.</p>
+          </article>
+          <article className="landing-feature">
+            <span className="landing-feature-icon"><Orbit size={20} /></span>
+            <h3>Follow the analysis workflow</h3>
+            <p>Track the real pipeline status. In demo mode, runs are queued and are not processed.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="landing-section landing-wrap" aria-labelledby="landing-pipeline-title">
+        <div className="landing-section-head">
+          <span className="muted-label">THE PLANNED AGENT WORKFLOW</span>
+          <h2 id="landing-pipeline-title">A structured review, one concern at a time.</h2>
+          <p>The project is designed around these specialist roles. Whether they run depends on the connected backend; this page does not simulate completed analysis.</p>
+        </div>
+        <div className="landing-pipeline-diagram" role="group" aria-label="Designed workflow stages">
+          <div className="landing-pipe-node highlight"><Lightbulb size={18} /><strong>Your idea</strong><span>Student submission</span></div>
+          {PIPELINE_STAGES.map((stage, index) => (
+            <Fragment key={stage[0].id}>
+              <ArrowRight className="landing-pipe-arrow" size={18} aria-hidden="true" />
+              <div className={`landing-pipe-stage ${stage.length > 1 ? 'parallel' : ''}`}>
+                <span className="landing-pipe-stage-label">Stage {index + 1}{stage.length > 1 ? ' · parallel' : ''}</span>
+                {stage.map(agent => (
+                  <div className="landing-pipe-node" key={agent.id}>
+                    <agent.icon size={18} /><strong>{agent.name}</strong><span>Designed role</span>
+                  </div>
+                ))}
+              </div>
+            </Fragment>
+          ))}
+          <ArrowRight className="landing-pipe-arrow" size={18} aria-hidden="true" />
+          <div className="landing-pipe-node highlight"><Check size={18} /><strong>Project blueprint</strong><span>Planned outcome</span></div>
+        </div>
+        <p className="landing-pipeline-note">The agents and blueprint are planned capabilities; demo-mode submissions currently remain queued.</p>
+      </section>
+
+      <section className="landing-section landing-wrap">
+        <div className="landing-cta-band">
+          <h2>Start with the idea you have.</h2>
+          <p>It does not need to be perfect. A few sentences are enough to begin planning.</p>
+          <div className="landing-cta">
+            <Link className="button button-primary" to="/register">Create your workspace <ArrowUpRight size={16} /></Link>
+            <Link className="button button-ghost" to="/sign-in">I already have an account</Link>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

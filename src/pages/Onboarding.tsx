@@ -127,8 +127,9 @@ export default function Onboarding({ profile, onSaved }: { profile: StudentProfi
         ? <button type="button" className="back-link" onClick={() => { setRetesting(false); setStep('edit') }}><ArrowLeft size={15} /> Back to editing</button>
         : <button type="button" className="back-link" onClick={() => setStep('skills')}><ArrowLeft size={15} /> Back to your skills</button>)}
       {editing && <button type="button" className="back-link" onClick={cancelEdit}><ArrowLeft size={15} /> {returnTo && returnTo !== '/onboarding' ? 'Back' : 'Back to your results'}</button>}
-      <div className="form-shell">
+      <div className="form-shell onboarding-shell">
         <div className="form-intro">
+          <span className="muted-label">YOUR PROJECT PROFILE</span>
           <h1>{intro.title}</h1>
           <p>{intro.text}</p>
           {!editing && <FlowSteps current={step === 'about' ? 0 : step === 'result' ? 2 : 1} />}

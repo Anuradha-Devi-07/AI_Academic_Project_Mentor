@@ -6,7 +6,7 @@ type Theme = 'dark' | 'light'
 
 /** Stored as `projectmentor:theme`; index.html reads the same key before first paint to avoid a flash. */
 const THEME_KEY = 'theme'
-const META_COLORS: Record<Theme, string> = { dark: '#0f1115', light: '#f6f7f9' }
+const META_COLORS: Record<Theme, string> = { dark: '#0B0D12', light: '#F7F6F2' }
 const media = () => window.matchMedia('(prefers-color-scheme: light)')
 
 export const getThemePreference = (): ThemePreference => {
