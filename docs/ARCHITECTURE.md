@@ -113,7 +113,7 @@ User 1 ── 1 StudentProfile 1 ──── * ProjectIdea 1 ──── * Pip
 | **StudentProfile** | `id`, `userId`, `name`, `course`, `year`, `skills: SkillRating[]`, `priorProjects: none\|one\|several`, `weeklyHours`, `assessment`, timestamps | M1 |
 | **SkillRating** | `skill`, `category`, `selfLevel: 1\|2\|3`, `quiz?: { correct, total, level }`, `level` (quiz level if taken, else self-rating) | M1 |
 | **SkillAssessment** | `score 0–100`, `level: beginner\|intermediate\|advanced`, `strengths[]`, `growthAreas[]`, `verifiedShare`, `assessedAt` | M1 |
-| **ProjectIdea** | `id`, `studentId`, `title`, `description`, `domain: ai_ml\|web\|mobile\|iot\|data\|other`, `durationWeeks`, `latestRunId?`, `createdAt` | M1 |
+| **ProjectIdea** | `id`, `studentId`, `title`, `description`, `domain: ai_ml\|web\|mobile\|iot\|data\|other`, `customDomain?` (student's own type when `other`), `durationWeeks`, `latestRunId?`, `createdAt` | M1 |
 | **PipelineRun** | `id`, `projectId`, `status: queued\|running\|completed\|failed`, `steps: AgentStep[]`, `results?`, `createdAt`, `finishedAt?` | M1 (created as `queued`) |
 | **AgentStep** | `agentId: feasibility\|scope_tech\|planner\|risk`, `status`, `startedAt?`, `finishedAt?`, `summary?`, `error?` | M1 (created as `queued`) |
 | **PipelineResults** | `feasibility`, `scopeAndStack`, `plan`, `risk` (one result per agent, see §2.1) | Later |
@@ -158,8 +158,9 @@ All bodies are JSON and use the models above. Errors return `{ "message": string
 | `POST` | `/students` | Profile fields (+ client `assessment`) | `StudentProfile` | M1 |
 | `PUT` | `/students/:id` | Profile fields (+ client `assessment`) | `StudentProfile` | M1 |
 | `GET` | `/students/:id/projects` | — | `ProjectIdea[]` | M1 |
-| `POST` | `/projects` | `{ studentId, title, description, domain, durationWeeks }` | `ProjectIdea` | M1 |
+| `POST` | `/projects` | `{ studentId, title, description, domain, customDomain?, durationWeeks }` | `ProjectIdea` | M1 |
 | `GET` | `/projects/:id` | — | `ProjectIdea` (incl. `latestRunId`) | M1 |
+| `DELETE` | `/projects/:id` | — | `204`; also deletes the project's pipeline runs | M1 |
 | `POST` | `/projects/:id/pipeline-runs` | — | `PipelineRun`, status `queued`: **the pipeline trigger** | M1 |
 | `GET` | `/pipeline-runs/:id` | — | `PipelineRun` with step statuses (and `results` when completed) | M1 (status) · later (results) |
 | `GET` / `POST` | `/projects/:id/mentor/messages` | `{ text }` | `MentorMessage[]` / reply | Later |

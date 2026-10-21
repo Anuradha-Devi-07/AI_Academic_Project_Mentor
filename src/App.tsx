@@ -6,6 +6,7 @@ import { RequireAuth, useAuth } from './auth/AuthContext'
 import { Brand } from './components/ui'
 import { UserMenu } from './components/UserMenu'
 import { ThemeMenu } from './components/ThemeMenu'
+import IntroAnimation from './components/IntroAnimation'
 import { SiteFooter } from './components/SiteFooter'
 import { api } from './services/api'
 import type { StudentProfile } from './types/models'
@@ -43,6 +44,11 @@ function useScrollManager() {
   }, [pathname, hash])
 }
 
+// The intro plays once per browser tab session, not on every page change or refresh.
+const INTRO_KEY = 'projectmentor:intro-seen'
+const introSeen = () => { try { return sessionStorage.getItem(INTRO_KEY) === '1' } catch { return false } }
+const markIntroSeen = () => { try { sessionStorage.setItem(INTRO_KEY, '1') } catch { /* storage blocked: it may play again */ } }
+
 function App() {
   const location = useLocation()
   const { user } = useAuth()
@@ -51,15 +57,19 @@ function App() {
   // Each account has its own profile: reload it whenever someone signs in or out.
   useEffect(() => { setProfile(api.getProfile()) }, [user?.id])
   useScrollManager()
+  const [showIntro, setShowIntro] = useState(() => !introSeen())
+  const endIntro = () => { markIntroSeen(); setShowIntro(false) }
 
 
   return (
     <div className="app-shell" id="top">
+      {showIntro && <IntroAnimation onComplete={endIntro} />}
       <a className="skip-link" href="#main">Skip to content</a>
       <header className="navbar">
         <div className="nav-inner">
           <Brand />
           <nav aria-label="Main" className="nav-bar">
+            <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/" end>{user ? 'Dashboard' : 'Home'}</NavLink>
             <NavLink className={({ isActive }) => isActive ? 'nav-link nav-home active' : 'nav-link nav-home'} to="/" end>Home</NavLink>
             {user ? <>
               <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/projects" end>My projects</NavLink>

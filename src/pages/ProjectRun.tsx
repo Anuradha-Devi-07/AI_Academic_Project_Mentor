@@ -6,7 +6,7 @@ import { PipelineGraph } from '../components/PipelineGraph'
 import { errorMessage } from '../components/ui'
 import { usePipelineRun } from '../hooks/usePipelineRun'
 import { api } from '../services/api'
-import { DOMAIN_LABELS } from '../lib/skills'
+import { projectTypeLabel } from '../lib/skills'
 import type { PipelineRun, ProjectIdea, RunStatus, StepStatus } from '../types/models'
 
 const RUN_LABELS: Record<RunStatus, string> = { queued: 'Queued', running: 'In progress', completed: 'Completed', failed: 'Failed' }
@@ -55,7 +55,7 @@ export default function ProjectRun() {
     <>
       <header className="run-header">
         <div>
-          <div className="eyebrow">{DOMAIN_LABELS[project.domain]} · {project.durationWeeks} weeks · Submitted {formatDate(project.createdAt)}</div>
+          <div className="eyebrow">{projectTypeLabel(project)} · {project.durationWeeks} weeks · Submitted {formatDate(project.createdAt)}</div>
           <h1>{project.title}</h1>
           <p>{project.description}</p>
         </div>

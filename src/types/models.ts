@@ -83,12 +83,14 @@ export interface ProjectIdea {
   title: string
   description: string
   domain: ProjectDomain
+  /** The student's own project type when domain is 'other', e.g. "Cybersecurity". */
+  customDomain?: string
   durationWeeks: number
   createdAt: ISODate
   latestRunId?: string
 }
 
-export type NewProjectIdea = Pick<ProjectIdea, 'title' | 'description' | 'domain' | 'durationWeeks'>
+export type NewProjectIdea = Pick<ProjectIdea, 'title' | 'description' | 'domain' | 'customDomain' | 'durationWeeks'>
 
 // ── Agent pipeline (modules 2–5) ───────────────────────────────────────────
 // Milestone 1 implements the trigger: submitting an idea creates a PipelineRun with every

@@ -22,6 +22,11 @@ export function triggerDemoRun(project: ProjectIdea): PipelineRun {
   return run
 }
 
+/** Removes every run of a deleted project. */
+export function deleteDemoRuns(projectId: string) {
+  save(RUNS_KEY, Object.fromEntries(Object.entries(readRuns()).filter(([, run]) => run.projectId !== projectId)))
+}
+
 export function getDemoRun(runId: string): PipelineRun | null {
   return readRuns()[runId] ?? null
 }

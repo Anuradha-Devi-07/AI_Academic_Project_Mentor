@@ -1,11 +1,15 @@
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
+import { ArrowRight, Check, CircleAlert, GraduationCap, LoaderCircle, RotateCcw, Send, Sparkles } from 'lucide-react'
 import { ArrowRight, Check, CircleAlert, GraduationCap, LoaderCircle, Send, Sparkles } from 'lucide-react'
 import { FlowSteps, errorMessage } from '../components/ui'
+import { VoiceInput } from '../components/VoiceInput'
 import { pipelineStages } from '../agents/registry'
 import { api } from '../services/api'
+import { load, remove, save } from '../lib/storage'
 import { DOMAIN_LABELS, LEVEL_LABELS } from '../lib/skills'
 import type { ProjectDomain, StudentProfile } from '../types/models'
 
@@ -18,8 +22,9 @@ const ideaSchema = z.object({
   title: z.string().trim().min(3, 'Give your idea a short working title (at least 3 characters).').max(80, 'Please keep the title under 80 characters.'),
   description: z.string().trim().min(MIN_IDEA, `Add a little more detail — at least ${MIN_IDEA} characters (about two sentences).`).max(MAX_IDEA, `Please keep it under ${MAX_IDEA} characters.`),
   domain: z.enum(['ai_ml', 'web', 'mobile', 'iot', 'data', 'other']),
+  customDomain: z.string().trim().max(40, 'Please keep this under 40 characters.'),
   durationWeeks: z.number().int().min(4).max(24),
-})
+}).refine(d => d.domain !== 'other' || d.customDomain.trim().length >= 2, { path: ['customDomain'], message: 'Type what kind of project it is, e.g. Cybersecurity.' })
 type IdeaForm = z.infer<typeof ideaSchema>
 
 export default function CreateProject({ profile }: { profile: StudentProfile | null }) {
@@ -37,22 +42,58 @@ function NeedsProfile() {
   )
 }
 
+const EMPTY_IDEA: IdeaForm = { title: '', description: '', domain: 'web', customDomain: '', durationWeeks: 8 }
+/** Unsent drafts are kept per student, so nothing typed is lost if they leave the page. */
+const draftKey = (userId: string) => `idea-draft:${userId}`
+const hasContent = (d: IdeaForm) => Boolean(d.title.trim() || d.description.trim() || d.customDomain.trim())
+
 function IdeaFormPage({ profile }: { profile: StudentProfile }) {
   const navigate = useNavigate()
+  const [initialDraft] = useState(() => load<IdeaForm | null>(draftKey(profile.userId), null))
+  const [draftRestored, setDraftRestored] = useState(() => Boolean(initialDraft && hasContent(initialDraft)))
+  // The setup tracker only matters before the first idea; hide it for returning students.
+  const [isFirstIdea, setIsFirstIdea] = useState<boolean | null>(null)
+  const { register, handleSubmit, watch, setValue, getValues, reset, formState: { errors, isSubmitting, isSubmitted }, setError } = useForm<IdeaForm>({
   const stages = pipelineStages()
   const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setError } = useForm<IdeaForm>({
     resolver: zodResolver(ideaSchema),
     mode: 'onSubmit',
     reValidateMode: 'onChange',
-    defaultValues: { title: '', description: '', domain: 'web', durationWeeks: 8 },
+    defaultValues: { ...EMPTY_IDEA, ...initialDraft },
   })
+
+  useEffect(() => {
+    let cancelled = false
+    api.listProjects().then(list => { if (!cancelled) setIsFirstIdea(list.length === 0) }).catch(() => { if (!cancelled) setIsFirstIdea(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  // Save a draft on every change; an empty form removes it.
+  useEffect(() => {
+    const subscription = watch(values => {
+      const draft = { ...EMPTY_IDEA, ...values } as IdeaForm
+      if (hasContent(draft)) save(draftKey(profile.userId), draft)
+      else remove(draftKey(profile.userId))
+    })
+    return () => subscription.unsubscribe()
+  }, [watch, profile.userId])
+
+  const startFresh = () => { reset(EMPTY_IDEA); remove(draftKey(profile.userId)); setDraftRestored(false) }
   const description = watch('description')
+  /** Each phrase spoken into the microphone is added to the end of the description. */
+  const addSpoken = (phrase: string) => {
+    const current = getValues('description')
+    const next = (current && !/\s$/.test(current) ? current + ' ' : current) + phrase
+    setValue('description', next.slice(0, MAX_IDEA), { shouldValidate: isSubmitted, shouldDirty: true })
+  }
   const domain = watch('domain')
   const length = description.trim().length
 
   const submit = handleSubmit(async data => {
     try {
-      const { project } = await api.submitIdea(data)
+      const { customDomain, ...rest } = data
+      const { project } = await api.submitIdea({ ...rest, ...(data.domain === 'other' ? { customDomain: customDomain.trim() } : {}) })
+      remove(draftKey(profile.userId))
       navigate(`/projects/${project.id}`)
     } catch (e) {
       setError('root', { message: errorMessage(e) })
@@ -66,11 +107,20 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
           <div>
             <span className="muted-label"><Sparkles size={13} /> PROJECT STUDIO</span>
             <h1>New project idea</h1>
+            <p>Describe your idea in two or three sentences, in English or your own language. It doesn't need to be perfect.</p>
+            <p className="profile-line"><GraduationCap size={14} /> Planning for <strong>{profile.name}</strong> · {LEVEL_LABELS[profile.assessment.level]} · {profile.weeklyHours}h/week · <Link to="/onboarding?edit=skills" state={{ from: '/create' }}>Edit</Link></p>
             <p>Start with the problem. A clear first draft is more useful than a perfect one.</p>
             <p className="profile-line"><GraduationCap size={14} /> Planning for <strong>{profile.name}</strong> · {LEVEL_LABELS[profile.assessment.level]} · {profile.weeklyHours}h/week · <Link to="/onboarding?edit=1" state={{ from: '/create' }}>Edit</Link></p>
           </div>
-          <FlowSteps current={2} />
+          {isFirstIdea && <FlowSteps current={2} />}
         </div>
+
+        {draftRestored && (
+          <div className="draft-note" role="status">
+            <RotateCcw size={15} /> <span>We restored the idea you were writing earlier.</span>
+            <button type="button" className="link-button" onClick={startFresh}>Start fresh</button>
+          </div>
+        )}
 
         {/* Two columns on wide screens so the whole form fits without scrolling. */}
         <form className="form-card idea-grid" onSubmit={submit} noValidate>
@@ -80,8 +130,12 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
             {errors.title && <span className="field-error" id="title-error"><CircleAlert size={13} /> {errors.title.message}</span>}
           </label>
 
-          <label>Describe your idea <span className="required-mark" aria-hidden="true">*</span>
-            <textarea {...register('description')} placeholder="What problem do you want to solve? Who would use your solution? What do you imagine it doing?" rows={6} maxLength={MAX_IDEA} aria-invalid={!!errors.description} aria-describedby="idea-help" />
+          <div className="desc-head">
+            <label htmlFor="idea-description" className="field-label">Describe your idea <span className="required-mark" aria-hidden="true">*</span></label>
+            <VoiceInput onText={addSpoken} />
+          </div>
+          <label className="desc-box">
+            <textarea id="idea-description" {...register('description')} placeholder="Type here, or press Speak and talk. What problem do you want to solve? Who would use your solution? What would it do?" rows={6} maxLength={MAX_IDEA} aria-invalid={!!errors.description} aria-describedby="idea-help" />
           </label>
           <div className="textarea-footer" id="idea-help">
             {errors.description
@@ -98,6 +152,13 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
             <div className="skill-options">
               {DOMAINS.map(d => <label key={d} className={domain === d ? 'skill-option selected' : 'skill-option'}><input type="radio" className="visually-hidden" value={d} {...register('domain')} />{domain === d && <Check size={13} />} {DOMAIN_LABELS[d]}</label>)}
             </div>
+            {domain === 'other' && (
+              <label className="custom-domain">
+                <span className="visually-hidden">Type of project</span>
+                <input {...register('customDomain')} placeholder="Type it, e.g. Cybersecurity or Robotics" maxLength={40} aria-invalid={!!errors.customDomain} aria-describedby={errors.customDomain ? 'custom-domain-error' : undefined} autoFocus />
+                {errors.customDomain && <span className="field-error" id="custom-domain-error"><CircleAlert size={13} /> {errors.customDomain.message}</span>}
+              </label>
+            )}
           </fieldset>
 
           <label>How long do you have?
@@ -106,6 +167,7 @@ function IdeaFormPage({ profile }: { profile: StudentProfile }) {
 
           {errors.root && <p className="form-error" role="alert"><CircleAlert size={15} /> {errors.root.message}</p>}
           <button className="button button-primary form-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? <><LoaderCircle size={16} className="spin" /> Submitting…</> : <><Send size={16} /> Submit idea</>}</button>
+          <p className="next-hint"><Sparkles size={14} /> Next: AI agents review its feasibility, scope, timeline &amp; risks.</p>
           <aside className="create-preview" aria-labelledby="create-preview-title">
             <h3 id="create-preview-title"><Sparkles size={16} /> What happens next</h3>
             <p>Your submission creates a project and a pipeline run. These are the designed analysis roles; demo-mode runs remain queued.</p>
