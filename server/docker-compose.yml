@@ -1,0 +1,24 @@
+# Local PostgreSQL for development. Start: `docker compose up -d` · Stop: `docker compose down`
+# The password comes from DB_PASSWORD in .env (next to this file).
+name: projectmentor
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: projectmentor
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in server/.env}
+      POSTGRES_DB: projectmentor
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U projectmentor -d projectmentor"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

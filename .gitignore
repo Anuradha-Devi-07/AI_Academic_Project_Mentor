@@ -9,3 +9,9 @@ dist
 
 # Local plain-English guide to the frontend (not committed)
 docs/frontend-guide.html
+
+# Python backend
+.venv/
+__pycache__/
+.pytest_cache/
+*.db

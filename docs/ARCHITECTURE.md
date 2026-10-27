@@ -155,7 +155,8 @@ All bodies are JSON and use the models above. Errors return `{ "message": string
 | `POST` | `/auth/login` | `{ email, password }` | `AuthSession` (401 on bad credentials) | M1 |
 | `POST` | `/auth/logout` | — | 204 (invalidates token) | M1 |
 | `POST` | `/auth/reset-password` | `{ email, password }` | 204, or 404 if no account has that email | M1 |
-| `POST` | `/students` | Profile fields (+ client `assessment`) | `StudentProfile` | M1 |
+| `GET` | `/students/me` | — | The signed-in user's `StudentProfile` (404 if none yet) | M2 |
+| `POST` | `/students` | Profile fields (+ client `assessment`) | `StudentProfile`; updates it if the user already has one. The server recomputes `assessment` | M1 |
 | `PUT` | `/students/:id` | Profile fields (+ client `assessment`) | `StudentProfile` | M1 |
 | `GET` | `/students/:id/projects` | — | `ProjectIdea[]` | M1 |
 | `POST` | `/projects` | `{ studentId, title, description, domain, customDomain?, durationWeeks }` | `ProjectIdea` | M1 |
