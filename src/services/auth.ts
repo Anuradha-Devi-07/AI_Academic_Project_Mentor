@@ -7,6 +7,7 @@
  */
 import { load, newId, save } from '../lib/storage'
 import type { AuthSession, User } from '../types/models'
+import { api } from './api'
 import { ApiError, http, isDemoMode } from './http'
 import { setSession } from './session'
 
@@ -32,6 +33,7 @@ export const auth = {
     const email = normaliseEmail(input.email)
     if (!isDemoMode) {
       const session = await http<AuthSession>('/auth/register', { method: 'POST', body: JSON.stringify({ ...input, email }) })
+      await api.cacheProfileFor(session)
       setSession(session)
       return session.user
     }
@@ -48,6 +50,8 @@ export const auth = {
     const email = normaliseEmail(input.email)
     if (!isDemoMode) {
       const session = await http<AuthSession>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: input.password }) })
+      // Load the saved profile before announcing the sign-in, so the app opens on the right page.
+      await api.cacheProfileFor(session)
       setSession(session)
       return session.user
     }

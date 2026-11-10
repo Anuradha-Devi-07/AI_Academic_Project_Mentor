@@ -5,8 +5,8 @@
  * All data belongs to the signed-in user.
  */
 import { assessSkills } from '../lib/skills'
-import { load, newId, save } from '../lib/storage'
-import type { NewProjectIdea, PipelineRun, ProjectIdea, StudentProfile } from '../types/models'
+import { load, newId, remove, save } from '../lib/storage'
+import type { AuthSession, NewProjectIdea, PipelineRun, ProjectIdea, StudentProfile } from '../types/models'
 import { deleteDemoRuns, getDemoRun, triggerDemoRun } from './demoPipeline'
 import { ApiError, http, isDemoMode } from './http'
 import { getSession } from './session'
@@ -31,6 +31,18 @@ export const api = {
   getProfile(): StudentProfile | null {
     const uid = getSession()?.user.id
     return uid ? load<StudentProfile | null>(profileKey(uid), null) : null
+  },
+
+  /**
+   * Backend mode: copies the account's saved profile into the local cache right after sign-in,
+   * so a student who signs in on a new device goes to their dashboard, not onboarding.
+   */
+  async cacheProfileFor(session: AuthSession): Promise<void> {
+    if (isDemoMode) return
+    const profile = await http<StudentProfile>('/students/me', { headers: { Authorization: `Bearer ${session.token}` } })
+      .catch(e => { if (e instanceof ApiError && e.status === 404) return null; throw e })
+    if (profile) save(profileKey(session.user.id), profile)
+    else remove(profileKey(session.user.id))
   },
 
   /** Creates or updates the profile; the skill assessment is (re)computed on every save. */

@@ -167,6 +167,8 @@ All bodies are JSON and use the models above. Errors return `{ "message": string
 | `GET` / `POST` | `/projects/:id/mentor/messages` | `{ text }` | `MentorMessage[]` / reply | Later |
 | `POST` | `/projects/:id/reports` | `{ kind }` | `ProjectReport` | Later |
 
+**Login system decision.** The team chose this FastAPI login (Argon2 + JWT, accounts in PostgreSQL) over Firebase Authentication, so all data lives in one database.
+
 **Authentication.** Every endpoint except `/auth/register` and `/auth/login` expects `Authorization: Bearer <token>` and acts only on the signed-in user's data (return 403/404 for anyone else's). A 401 makes the frontend clear the session and send the user to sign in. Hash passwords on the server with bcrypt or argon2, and rate-limit the login endpoint.
 
 **Password reset — known risk.** The team chose a one-page reset: email + new password + confirm, with no emailed link or code. This means anyone who knows a student's email can change that student's password, and the 404 response reveals which emails have accounts. That is acceptable for the classroom demo only. Before real students use it, add an ownership check: email a 6-digit code or one-time link, have `/auth/reset-password` require it (single-use, expires in about 15–30 minutes), rate-limit the endpoint, and end the account's other sessions after a reset. The frontend form would then gain one "code" field.
